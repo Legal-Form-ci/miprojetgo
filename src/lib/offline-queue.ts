@@ -15,7 +15,7 @@ export type QueuedOperation = {
   mode_paiement: string;
   note: string | null;
   date_operation: string;
-  source: string;
+  source: "manuel" | "import_ia";
   queued_at: string;
 };
 
