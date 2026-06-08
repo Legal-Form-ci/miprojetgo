@@ -50,7 +50,7 @@ function AuthedLayout() {
       <header className="sticky top-0 z-30 backdrop-blur bg-background/85 border-b border-border">
         <div className="max-w-2xl mx-auto px-4 h-14 flex items-center justify-between">
           <Link to="/dashboard" className="flex items-center gap-2">
-            <img src={logo.url} alt="" className="w-8 h-8 object-contain" />
+            <img src={logo.url} alt="" className="w-9 h-9 object-contain" />
             <span className="font-display font-bold text-primary text-lg leading-none">
               MaestraBook
             </span>

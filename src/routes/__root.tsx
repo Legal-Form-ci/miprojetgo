@@ -12,6 +12,9 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Toaster } from "sonner";
+import { registerPWA } from "../lib/pwa-register";
+import { flushQueue, getQueue, subscribeQueue } from "../lib/offline-queue";
+import { useState } from "react";
 
 function NotFoundComponent() {
   return (
@@ -81,6 +84,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { title: "MaestraBook — Tes comptes. Ton contrôle." },
       { name: "description", content: "Gestion financière simple et rapide pour la cave chez Maestra." },
       { name: "theme-color", content: "#4a1322" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "default" },
+      { name: "apple-mobile-web-app-title", content: "MaestraBook" },
       { property: "og:title", content: "MaestraBook" },
       { property: "og:description", content: "Tes comptes. Ton contrôle." },
       { property: "og:type", content: "website" },
@@ -91,6 +97,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         rel: "stylesheet",
         href: appCss,
       },
+      { rel: "manifest", href: "/manifest.webmanifest" },
+      { rel: "icon", type: "image/png", sizes: "32x32", href: "/icons/favicon-32.png" },
+      { rel: "apple-touch-icon", sizes: "180x180", href: "/icons/apple-touch-icon.png" },
     ],
   }),
   shellComponent: RootShell,
@@ -115,9 +124,43 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const [online, setOnline] = useState(() => (typeof navigator === "undefined" ? true : navigator.onLine));
+  const [pending, setPending] = useState(0);
+
+  useEffect(() => {
+    registerPWA();
+  }, []);
+
+  useEffect(() => {
+    const update = () => {
+      const isOnline = typeof navigator === "undefined" ? true : navigator.onLine;
+      setOnline(isOnline);
+      setPending(getQueue().length);
+      if (isOnline && getQueue().length > 0) {
+        flushQueue().then(({ ok }) => {
+          if (ok > 0) queryClient.invalidateQueries();
+        });
+      }
+    };
+    update();
+    return subscribeQueue(update);
+  }, [queryClient]);
 
   return (
     <QueryClientProvider client={queryClient}>
+      {(!online || pending > 0) && (
+        <div
+          className="fixed top-0 inset-x-0 z-50 text-center text-[11px] font-semibold py-1.5"
+          style={{
+            background: online ? "var(--gold)" : "var(--destructive)",
+            color: online ? "var(--gold-foreground)" : "var(--destructive-foreground)",
+          }}
+        >
+          {online
+            ? `Synchronisation… ${pending} opération${pending > 1 ? "s" : ""} en attente`
+            : `Mode hors ligne${pending > 0 ? ` · ${pending} en file` : ""}`}
+        </div>
+      )}
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
       <Toaster position="top-center" richColors closeButton />

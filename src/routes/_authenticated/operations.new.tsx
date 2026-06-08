@@ -4,6 +4,7 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ArrowDownCircle, ArrowUpCircle, Loader2 } from "lucide-react";
+import { enqueueOperation } from "@/lib/offline-queue";
 
 export const Route = createFileRoute("/_authenticated/operations/new")({
   head: () => ({ meta: [{ title: "Nouvelle opération — MaestraBook" }] }),
@@ -32,7 +33,7 @@ function NewOperation() {
     mutationFn: async () => {
       const { data: u } = await supabase.auth.getUser();
       if (!u.user) throw new Error("Non connecté");
-      const { error } = await supabase.from("operations").insert({
+      const payload = {
         user_id: u.user.id,
         type,
         montant: Number(montant.replace(/\s/g, "").replace(",", ".")),
@@ -41,12 +42,23 @@ function NewOperation() {
         mode_paiement: mode,
         note: note.trim() || null,
         date_operation: new Date(date).toISOString(),
-        source: "manuel",
-      });
-      if (error) throw error;
+        source: "manuel" as const,
+      };
+      const offline = typeof navigator !== "undefined" && !navigator.onLine;
+      if (offline) {
+        enqueueOperation(payload);
+        return { queued: true };
+      }
+      const { error } = await supabase.from("operations").insert(payload);
+      if (error) {
+        // network failure → queue
+        enqueueOperation(payload);
+        return { queued: true };
+      }
+      return { queued: false };
     },
-    onSuccess: () => {
-      toast.success("Opération enregistrée");
+    onSuccess: (res) => {
+      toast.success(res?.queued ? "Enregistrée hors ligne · sera synchronisée" : "Opération enregistrée");
       qc.invalidateQueries({ queryKey: ["dashboard-ops"] });
       qc.invalidateQueries({ queryKey: ["history-ops"] });
       navigate({ to: "/dashboard" });
