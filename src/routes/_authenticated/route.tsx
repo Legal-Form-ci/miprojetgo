@@ -34,11 +34,16 @@ function AuthedLayout() {
     navigate({ to: "/auth", replace: true });
   }
 
-  const tabs = [
+  const tabs: Array<{
+    to: "/dashboard" | "/operations/new" | "/historique";
+    label: string;
+    icon: typeof LayoutDashboard;
+    primary?: boolean;
+  }> = [
     { to: "/dashboard", label: "Accueil", icon: LayoutDashboard },
     { to: "/operations/new", label: "Saisir", icon: PlusCircle, primary: true },
     { to: "/historique", label: "Historique", icon: History },
-  ] as const;
+  ];
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
