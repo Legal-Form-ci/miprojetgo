@@ -57,28 +57,50 @@ function AuthPage() {
   }
 
   return (
-    <div
-      className="min-h-screen flex flex-col items-center justify-center px-5 py-10"
-      style={{ background: "var(--gradient-hero)" }}
-    >
-      <div className="w-full max-w-sm">
-        <div className="flex flex-col items-center mb-8">
-          <div className="bg-background rounded-3xl p-4 mb-5" style={{ boxShadow: "var(--shadow-elegant)" }}>
-            <img src={logo.url} alt="MaestraBook" className="w-28 h-28 object-contain" />
+    <div className="min-h-screen flex flex-col items-center justify-center px-6 py-10 bg-white relative overflow-hidden">
+      {/* Subtle warm accents */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -top-32 -left-32 w-80 h-80 rounded-full opacity-20 blur-3xl"
+        style={{ background: "var(--gold)" }}
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -bottom-32 -right-24 w-96 h-96 rounded-full opacity-15 blur-3xl"
+        style={{ background: "var(--primary)" }}
+      />
+
+      <div className="w-full max-w-sm relative">
+        <div className="flex flex-col items-center mb-10">
+          <div className="relative mb-6">
+            <div
+              aria-hidden
+              className="absolute inset-0 rounded-[2rem] blur-2xl opacity-40"
+              style={{ background: "var(--gradient-gold)" }}
+            />
+            <img
+              src={logo.url}
+              alt="MaestraBook"
+              className="relative w-44 h-44 object-contain drop-shadow-xl"
+            />
           </div>
-          <h1 className="font-display text-3xl font-bold text-background">MaestraBook</h1>
-          <p className="text-sm mt-1 italic" style={{ color: "var(--gold)" }}>
+          <h1 className="font-display text-4xl font-bold tracking-tight" style={{ color: "var(--primary)" }}>
+            MaestraBook
+          </h1>
+          <p className="text-sm mt-2 italic font-medium" style={{ color: "oklch(0.55 0.14 60)" }}>
             Tes comptes. Ton contrôle.
           </p>
         </div>
 
         <form
           onSubmit={handleSubmit}
-          className="bg-card rounded-2xl p-6 space-y-4"
-          style={{ boxShadow: "var(--shadow-elegant)" }}
+          className="bg-white rounded-2xl p-6 space-y-4 border border-[oklch(0.92_0.02_70)]"
+          style={{ boxShadow: "0 20px 50px -25px oklch(0.36 0.13 18 / 0.25)" }}
         >
-          <h2 className="font-display text-xl font-semibold text-primary mb-1">Connexion</h2>
-          <p className="text-xs text-muted-foreground -mt-2 mb-2">
+          <h2 className="font-display text-xl font-semibold" style={{ color: "var(--primary)" }}>
+            Connexion
+          </h2>
+          <p className="text-xs text-muted-foreground -mt-2">
             Entre ton numéro et ton mot de passe.
           </p>
 
@@ -116,18 +138,18 @@ function AuthPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full h-12 rounded-xl font-semibold text-primary-foreground transition-transform active:scale-[0.98] disabled:opacity-60 flex items-center justify-center gap-2"
-            style={{ background: "var(--gradient-primary)", boxShadow: "var(--shadow-card)" }}
+            className="w-full h-12 rounded-xl font-semibold text-primary-foreground transition-transform active:scale-[0.98] disabled:opacity-60 flex items-center justify-center gap-2 mt-2"
+            style={{ background: "var(--gradient-primary)", boxShadow: "var(--shadow-elegant)" }}
           >
             {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Se connecter"}
           </button>
 
-          <p className="text-[11px] text-muted-foreground text-center pt-2">
+          <p className="text-[11px] text-muted-foreground text-center pt-1">
             Accès réservé. Contacte l'administratrice pour obtenir un compte.
           </p>
         </form>
 
-        <p className="text-center text-xs mt-6" style={{ color: "oklch(0.85 0.05 75)" }}>
+        <p className="text-center text-xs mt-6 text-muted-foreground">
           © {new Date().getFullYear()} Cave chez Maestra
         </p>
       </div>

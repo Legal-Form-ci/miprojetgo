@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowDownCircle, ArrowUpCircle, Wallet, Sparkles } from "lucide-react";
+import logo from "@/assets/maestrabook-logo.png.asset.json";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({ meta: [{ title: "Tableau de bord — MaestraBook" }] }),
@@ -59,6 +60,29 @@ function Dashboard() {
 
   return (
     <div className="space-y-6">
+      <section className="flex items-center gap-4 pt-1">
+        <div className="relative shrink-0">
+          <div
+            aria-hidden
+            className="absolute inset-0 rounded-2xl blur-xl opacity-50"
+            style={{ background: "var(--gradient-gold)" }}
+          />
+          <img
+            src={logo.url}
+            alt="MaestraBook"
+            className="relative w-20 h-20 object-contain drop-shadow-md"
+          />
+        </div>
+        <div className="min-w-0">
+          <h1 className="font-display text-2xl font-bold text-primary leading-tight">
+            Bonjour Maestra
+          </h1>
+          <p className="text-xs text-muted-foreground italic mt-0.5">
+            Tes comptes. Ton contrôle.
+          </p>
+        </div>
+      </section>
+
       <section
         className="rounded-3xl p-6 text-primary-foreground relative overflow-hidden"
         style={{ background: "var(--gradient-hero)", boxShadow: "var(--shadow-elegant)" }}
