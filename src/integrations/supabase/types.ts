@@ -14,16 +14,134 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      import_sessions: {
+        Row: {
+          created_at: string
+          id: string
+          image_url: string | null
+          operations_extraites: Json | null
+          statut: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          operations_extraites?: Json | null
+          statut?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          operations_extraites?: Json | null
+          statut?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      operations: {
+        Row: {
+          categorie: string
+          created_at: string
+          date_operation: string
+          description: string
+          id: string
+          mode_paiement: string
+          montant: number
+          note: string | null
+          recu_url: string | null
+          source: Database["public"]["Enums"]["op_source"]
+          type: Database["public"]["Enums"]["op_type"]
+          user_id: string
+        }
+        Insert: {
+          categorie: string
+          created_at?: string
+          date_operation?: string
+          description: string
+          id?: string
+          mode_paiement: string
+          montant: number
+          note?: string | null
+          recu_url?: string | null
+          source?: Database["public"]["Enums"]["op_source"]
+          type: Database["public"]["Enums"]["op_type"]
+          user_id: string
+        }
+        Update: {
+          categorie?: string
+          created_at?: string
+          date_operation?: string
+          description?: string
+          id?: string
+          mode_paiement?: string
+          montant?: number
+          note?: string | null
+          recu_url?: string | null
+          source?: Database["public"]["Enums"]["op_source"]
+          type?: Database["public"]["Enums"]["op_type"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          full_name: string | null
+          id: string
+          phone: string
+        }
+        Insert: {
+          created_at?: string
+          full_name?: string | null
+          id: string
+          phone: string
+        }
+        Update: {
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          phone?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "vendeur"
+      op_source: "manuel" | "import_ia"
+      op_type: "entree" | "sortie"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +268,10 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "vendeur"],
+      op_source: ["manuel", "import_ia"],
+      op_type: ["entree", "sortie"],
+    },
   },
 } as const
