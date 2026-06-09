@@ -13,9 +13,9 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedUtilisateursRouteImport } from './routes/_authenticated/utilisateurs'
-import { Route as AuthenticatedOperationsRouteImport } from './routes/_authenticated/operations'
 import { Route as AuthenticatedHistoriqueRouteImport } from './routes/_authenticated/historique'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedOperationsIndexRouteImport } from './routes/_authenticated/operations.index'
 import { Route as AuthenticatedOperationsNewRouteImport } from './routes/_authenticated/operations.new'
 
 const AuthRoute = AuthRouteImport.update({
@@ -38,11 +38,6 @@ const AuthenticatedUtilisateursRoute =
     path: '/utilisateurs',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedOperationsRoute = AuthenticatedOperationsRouteImport.update({
-  id: '/operations',
-  path: '/operations',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
 const AuthenticatedHistoriqueRoute = AuthenticatedHistoriqueRouteImport.update({
   id: '/historique',
   path: '/historique',
@@ -53,11 +48,17 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedOperationsIndexRoute =
+  AuthenticatedOperationsIndexRouteImport.update({
+    id: '/operations/',
+    path: '/operations/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedOperationsNewRoute =
   AuthenticatedOperationsNewRouteImport.update({
-    id: '/new',
-    path: '/new',
-    getParentRoute: () => AuthenticatedOperationsRoute,
+    id: '/operations/new',
+    path: '/operations/new',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -65,18 +66,18 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/historique': typeof AuthenticatedHistoriqueRoute
-  '/operations': typeof AuthenticatedOperationsRouteWithChildren
   '/utilisateurs': typeof AuthenticatedUtilisateursRoute
   '/operations/new': typeof AuthenticatedOperationsNewRoute
+  '/operations/': typeof AuthenticatedOperationsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/historique': typeof AuthenticatedHistoriqueRoute
-  '/operations': typeof AuthenticatedOperationsRouteWithChildren
   '/utilisateurs': typeof AuthenticatedUtilisateursRoute
   '/operations/new': typeof AuthenticatedOperationsNewRoute
+  '/operations': typeof AuthenticatedOperationsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -85,9 +86,9 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/historique': typeof AuthenticatedHistoriqueRoute
-  '/_authenticated/operations': typeof AuthenticatedOperationsRouteWithChildren
   '/_authenticated/utilisateurs': typeof AuthenticatedUtilisateursRoute
   '/_authenticated/operations/new': typeof AuthenticatedOperationsNewRoute
+  '/_authenticated/operations/': typeof AuthenticatedOperationsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -96,18 +97,18 @@ export interface FileRouteTypes {
     | '/auth'
     | '/dashboard'
     | '/historique'
-    | '/operations'
     | '/utilisateurs'
     | '/operations/new'
+    | '/operations/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/auth'
     | '/dashboard'
     | '/historique'
-    | '/operations'
     | '/utilisateurs'
     | '/operations/new'
+    | '/operations'
   id:
     | '__root__'
     | '/'
@@ -115,9 +116,9 @@ export interface FileRouteTypes {
     | '/auth'
     | '/_authenticated/dashboard'
     | '/_authenticated/historique'
-    | '/_authenticated/operations'
     | '/_authenticated/utilisateurs'
     | '/_authenticated/operations/new'
+    | '/_authenticated/operations/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -156,13 +157,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedUtilisateursRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/operations': {
-      id: '/_authenticated/operations'
-      path: '/operations'
-      fullPath: '/operations'
-      preLoaderRoute: typeof AuthenticatedOperationsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
     '/_authenticated/historique': {
       id: '/_authenticated/historique'
       path: '/historique'
@@ -177,42 +171,37 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/operations/': {
+      id: '/_authenticated/operations/'
+      path: '/operations'
+      fullPath: '/operations/'
+      preLoaderRoute: typeof AuthenticatedOperationsIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/operations/new': {
       id: '/_authenticated/operations/new'
-      path: '/new'
+      path: '/operations/new'
       fullPath: '/operations/new'
       preLoaderRoute: typeof AuthenticatedOperationsNewRouteImport
-      parentRoute: typeof AuthenticatedOperationsRoute
+      parentRoute: typeof AuthenticatedRouteRoute
     }
   }
 }
 
-interface AuthenticatedOperationsRouteChildren {
-  AuthenticatedOperationsNewRoute: typeof AuthenticatedOperationsNewRoute
-}
-
-const AuthenticatedOperationsRouteChildren: AuthenticatedOperationsRouteChildren =
-  {
-    AuthenticatedOperationsNewRoute: AuthenticatedOperationsNewRoute,
-  }
-
-const AuthenticatedOperationsRouteWithChildren =
-  AuthenticatedOperationsRoute._addFileChildren(
-    AuthenticatedOperationsRouteChildren,
-  )
-
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedHistoriqueRoute: typeof AuthenticatedHistoriqueRoute
-  AuthenticatedOperationsRoute: typeof AuthenticatedOperationsRouteWithChildren
   AuthenticatedUtilisateursRoute: typeof AuthenticatedUtilisateursRoute
+  AuthenticatedOperationsNewRoute: typeof AuthenticatedOperationsNewRoute
+  AuthenticatedOperationsIndexRoute: typeof AuthenticatedOperationsIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedHistoriqueRoute: AuthenticatedHistoriqueRoute,
-  AuthenticatedOperationsRoute: AuthenticatedOperationsRouteWithChildren,
   AuthenticatedUtilisateursRoute: AuthenticatedUtilisateursRoute,
+  AuthenticatedOperationsNewRoute: AuthenticatedOperationsNewRoute,
+  AuthenticatedOperationsIndexRoute: AuthenticatedOperationsIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
@@ -226,3 +215,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
