@@ -4,6 +4,7 @@
 import { supabase } from "@/integrations/supabase/client";
 
 const KEY = "maestrabook.offline-queue.v1";
+const PROGRESS_EVT = "maestra-queue-progress";
 
 export type QueuedOperation = {
   id: string;
@@ -51,14 +52,28 @@ export async function flushQueue(): Promise<{ ok: number; failed: number }> {
   if (list.length === 0) return { ok: 0, failed: 0 };
   let ok = 0;
   const remaining: QueuedOperation[] = [];
-  for (const item of list) {
+  const total = list.length;
+  for (let i = 0; i < list.length; i++) {
+    const item = list[i];
     const { id: _id, queued_at: _q, ...payload } = item;
     const { error } = await supabase.from("operations").insert(payload);
     if (error) remaining.push(item);
     else ok++;
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(
+        new CustomEvent(PROGRESS_EVT, { detail: { done: i + 1, total, ok, failed: remaining.length } }),
+      );
+    }
   }
   write(remaining);
   return { ok, failed: remaining.length };
+}
+
+export function subscribeProgress(cb: (d: { done: number; total: number; ok: number; failed: number }) => void): () => void {
+  if (typeof window === "undefined") return () => {};
+  const h = (e: Event) => cb((e as CustomEvent).detail);
+  window.addEventListener(PROGRESS_EVT, h);
+  return () => window.removeEventListener(PROGRESS_EVT, h);
 }
 
 export function subscribeQueue(cb: () => void): () => void {

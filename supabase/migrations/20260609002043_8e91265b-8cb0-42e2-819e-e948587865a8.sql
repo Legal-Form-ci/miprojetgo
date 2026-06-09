@@ -1,0 +1,1 @@
+DROP FUNCTION IF EXISTS public.admin_create_vendeur(text, text, text);

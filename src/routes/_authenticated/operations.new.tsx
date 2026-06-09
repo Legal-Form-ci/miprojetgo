@@ -1,13 +1,16 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ArrowDownCircle, ArrowUpCircle, Loader2 } from "lucide-react";
+import { ArrowDownCircle, ArrowUpCircle, Loader2, ArrowLeft } from "lucide-react";
 import { enqueueOperation } from "@/lib/offline-queue";
 
 export const Route = createFileRoute("/_authenticated/operations/new")({
   head: () => ({ meta: [{ title: "Nouvelle opération — MaestraBook" }] }),
+  validateSearch: (s: Record<string, unknown>) => ({
+    type: (s.type === "sortie" ? "sortie" : "entree") as "entree" | "sortie",
+  }),
   component: NewOperation,
 });
 
@@ -17,7 +20,8 @@ const PAIEMENTS = ["Espèces", "Wave", "MTN Money", "Orange Money", "Moov Money"
 function NewOperation() {
   const navigate = useNavigate();
   const qc = useQueryClient();
-  const [type, setType] = useState<"entree" | "sortie">("entree");
+  const { type } = Route.useSearch();
+  const isIn = type === "entree";
   const [montant, setMontant] = useState("");
   const [description, setDescription] = useState("");
   const [categorie, setCategorie] = useState(CATEGORIES[0]);
@@ -49,18 +53,28 @@ function NewOperation() {
         enqueueOperation(payload);
         return { queued: true };
       }
-      const { error } = await supabase.from("operations").insert(payload);
-      if (error) {
-        // network failure → queue
-        enqueueOperation(payload);
-        return { queued: true };
+      try {
+        const { error } = await supabase.from("operations").insert(payload);
+        if (error) {
+          // True backend error (RLS, validation): surface it, do NOT queue.
+          throw new Error(error.message);
+        }
+        return { queued: false };
+      } catch (e) {
+        // Real network failure (fetch threw) → queue offline.
+        const msg = (e as Error)?.message || "";
+        if (/network|failed to fetch|load failed/i.test(msg)) {
+          enqueueOperation(payload);
+          return { queued: true };
+        }
+        throw e;
       }
-      return { queued: false };
     },
     onSuccess: (res) => {
-      toast.success(res?.queued ? "Enregistrée hors ligne · sera synchronisée" : "Opération enregistrée");
+      toast.success(res?.queued ? "Enregistrée hors ligne · sera synchronisée" : "Opération enregistrée ✓");
       qc.invalidateQueries({ queryKey: ["dashboard-ops"] });
       qc.invalidateQueries({ queryKey: ["history-ops"] });
+      qc.refetchQueries({ queryKey: ["dashboard-ops"] });
       navigate({ to: "/dashboard" });
     },
     onError: (e: Error) => toast.error(e.message || "Erreur d'enregistrement"),
@@ -74,34 +88,24 @@ function NewOperation() {
     m.mutate();
   }
 
+  const accent = isIn
+    ? { from: "#047857", to: "#10b981", text: "text-emerald-700", label: "Entrée" }
+    : { from: "#991b1b", to: "#ef4444", text: "text-red-700", label: "Sortie" };
+
   return (
     <form onSubmit={submit} className="space-y-5">
-      <header>
-        <h1 className="font-display text-2xl font-bold text-primary">Nouvelle opération</h1>
-        <p className="text-sm text-muted-foreground mt-1">Saisis-la en moins de 15 secondes.</p>
+      <header className="flex items-center gap-3">
+        <Link to="/operations" className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-foreground/70 hover:text-primary">
+          <ArrowLeft className="w-5 h-5" />
+        </Link>
+        <div className="flex-1">
+          <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wide text-white`}
+            style={{ background: `linear-gradient(135deg, ${accent.from}, ${accent.to})` }}>
+            {isIn ? <ArrowUpCircle className="w-3.5 h-3.5" /> : <ArrowDownCircle className="w-3.5 h-3.5" />} {accent.label}
+          </div>
+          <h1 className="font-display text-xl font-bold text-primary mt-1">Nouvelle {accent.label.toLowerCase()}</h1>
+        </div>
       </header>
-
-      <div className="grid grid-cols-2 gap-2 p-1 rounded-2xl bg-secondary">
-        <button
-          type="button"
-          onClick={() => setType("entree")}
-          className={`h-12 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-all ${
-            type === "entree" ? "text-primary-foreground" : "text-muted-foreground"
-          }`}
-          style={type === "entree" ? { background: "var(--gradient-primary)", boxShadow: "var(--shadow-card)" } : undefined}
-        >
-          <ArrowUpCircle className="w-5 h-5" /> Entrée
-        </button>
-        <button
-          type="button"
-          onClick={() => setType("sortie")}
-          className={`h-12 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-all ${
-            type === "sortie" ? "text-primary-foreground bg-destructive shadow" : "text-muted-foreground"
-          }`}
-        >
-          <ArrowDownCircle className="w-5 h-5" /> Sortie
-        </button>
-      </div>
 
       <Field label="Montant (FCFA)">
         <input
@@ -111,7 +115,8 @@ function NewOperation() {
           placeholder="0"
           value={montant}
           onChange={(e) => setMontant(e.target.value)}
-          className="w-full h-14 px-4 rounded-xl bg-card border border-border focus:outline-none focus:ring-2 focus:ring-ring text-2xl font-display font-bold text-primary tabular-nums"
+          className={`w-full h-16 px-4 rounded-xl bg-card border-2 focus:outline-none text-3xl font-display font-bold tabular-nums ${accent.text}`}
+          style={{ borderColor: isIn ? "#10b981" : "#ef4444" }}
         />
       </Field>
 
@@ -167,10 +172,10 @@ function NewOperation() {
       <button
         type="submit"
         disabled={m.isPending}
-        className="w-full h-14 rounded-xl font-semibold text-primary-foreground transition-transform active:scale-[0.98] disabled:opacity-60 flex items-center justify-center gap-2"
-        style={{ background: "var(--gradient-primary)", boxShadow: "var(--shadow-elegant)" }}
+        className="w-full h-14 rounded-xl font-semibold text-white transition-transform active:scale-[0.98] disabled:opacity-60 flex items-center justify-center gap-2"
+        style={{ background: `linear-gradient(135deg, ${accent.from}, ${accent.to})`, boxShadow: "var(--shadow-elegant)" }}
       >
-        {m.isPending ? <Loader2 className="w-5 h-5 animate-spin" /> : "Enregistrer l'opération"}
+        {m.isPending ? <Loader2 className="w-5 h-5 animate-spin" /> : `Enregistrer la ${accent.label.toLowerCase()}`}
       </button>
     </form>
   );

@@ -127,7 +127,16 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      users_overview: {
+        Row: {
+          created_at: string | null
+          full_name: string | null
+          id: string | null
+          phone: string | null
+          roles: string[] | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       has_role: {

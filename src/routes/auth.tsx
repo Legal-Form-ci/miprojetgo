@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import logo from "@/assets/maestrabook-logo.png.asset.json";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Loader2, Eye, EyeOff, Phone, Lock } from "lucide-react";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
@@ -24,6 +24,8 @@ function AuthPage() {
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPwd, setShowPwd] = useState(false);
+  const [errors, setErrors] = useState<{ phone?: string; password?: string }>({});
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -31,17 +33,20 @@ function AuthPage() {
     });
   }, [navigate]);
 
+  function validate() {
+    const cleaned = phone.replace(/\D/g, "");
+    const errs: typeof errors = {};
+    if (cleaned.length < 8) errs.phone = "Numéro trop court (8 chiffres min).";
+    else if (cleaned.length > 15) errs.phone = "Numéro trop long.";
+    if (password.length < 6) errs.password = "Mot de passe : 6 caractères minimum.";
+    setErrors(errs);
+    return Object.keys(errs).length === 0;
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (!validate()) return;
     const cleaned = phone.replace(/\D/g, "");
-    if (cleaned.length < 8) {
-      toast.error("Numéro de téléphone invalide");
-      return;
-    }
-    if (password.length < 6) {
-      toast.error("Mot de passe trop court");
-      return;
-    }
     setLoading(true);
     const { error } = await supabase.auth.signInWithPassword({
       email: phoneToEmail(cleaned),
@@ -49,6 +54,7 @@ function AuthPage() {
     });
     setLoading(false);
     if (error) {
+      setErrors({ password: "Numéro ou mot de passe incorrect." });
       toast.error("Numéro ou mot de passe incorrect");
       return;
     }
@@ -81,13 +87,10 @@ function AuthPage() {
             <img
               src={logo.url}
               alt="MaestraBook"
-              className="relative w-44 h-44 object-contain drop-shadow-xl"
+              className="relative w-52 h-52 object-contain drop-shadow-xl"
             />
           </div>
-          <h1 className="font-display text-4xl font-bold tracking-tight" style={{ color: "var(--primary)" }}>
-            MaestraBook
-          </h1>
-          <p className="text-sm mt-2 italic font-medium" style={{ color: "oklch(0.55 0.14 60)" }}>
+          <p className="text-sm italic font-medium" style={{ color: "oklch(0.55 0.14 60)" }}>
             Tes comptes. Ton contrôle.
           </p>
         </div>
@@ -108,31 +111,49 @@ function AuthPage() {
             <label className="text-xs font-semibold text-foreground/80 uppercase tracking-wide">
               Numéro de téléphone
             </label>
-            <input
-              type="tel"
-              inputMode="numeric"
-              autoComplete="tel"
-              placeholder="07 10 26 28 75"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              className="w-full h-12 px-4 rounded-xl bg-input/40 border border-border focus:outline-none focus:ring-2 focus:ring-ring text-foreground text-base"
-              required
-            />
+            <div className="relative">
+              <Phone className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <input
+                type="tel"
+                inputMode="numeric"
+                autoComplete="tel"
+                placeholder="07 10 26 28 75"
+                value={phone}
+                maxLength={20}
+                onChange={(e) => { setPhone(e.target.value); if (errors.phone) setErrors({ ...errors, phone: undefined }); }}
+                className={`w-full h-12 pl-10 pr-4 rounded-xl bg-input/40 border focus:outline-none focus:ring-2 focus:ring-ring text-foreground text-base tabular-nums ${errors.phone ? "border-red-500" : "border-border"}`}
+                required
+              />
+            </div>
+            {errors.phone && <p className="text-[11px] text-red-600 font-medium">{errors.phone}</p>}
           </div>
 
           <div className="space-y-1.5">
             <label className="text-xs font-semibold text-foreground/80 uppercase tracking-wide">
               Mot de passe
             </label>
-            <input
-              type="password"
-              autoComplete="current-password"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full h-12 px-4 rounded-xl bg-input/40 border border-border focus:outline-none focus:ring-2 focus:ring-ring text-foreground text-base"
-              required
-            />
+            <div className="relative">
+              <Lock className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <input
+                type={showPwd ? "text" : "password"}
+                autoComplete="current-password"
+                placeholder="••••••••"
+                value={password}
+                maxLength={64}
+                onChange={(e) => { setPassword(e.target.value); if (errors.password) setErrors({ ...errors, password: undefined }); }}
+                className={`w-full h-12 pl-10 pr-11 rounded-xl bg-input/40 border focus:outline-none focus:ring-2 focus:ring-ring text-foreground text-base ${errors.password ? "border-red-500" : "border-border"}`}
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPwd((s) => !s)}
+                aria-label={showPwd ? "Masquer" : "Afficher"}
+                className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-lg text-muted-foreground hover:text-primary flex items-center justify-center"
+              >
+                {showPwd ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
+            {errors.password && <p className="text-[11px] text-red-600 font-medium">{errors.password}</p>}
           </div>
 
           <button

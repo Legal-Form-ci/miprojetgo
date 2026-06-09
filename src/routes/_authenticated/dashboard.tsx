@@ -36,6 +36,7 @@ function Dashboard() {
       return (data ?? []) as Op[];
     },
     refetchOnWindowFocus: true,
+    refetchOnMount: "always",
   });
 
   const ops = data ?? [];
@@ -113,6 +114,29 @@ function Dashboard() {
         />
       </section>
 
+      <section className="grid grid-cols-2 gap-3">
+        <Link
+          to="/operations/new"
+          search={{ type: "entree" }}
+          className="relative overflow-hidden rounded-2xl p-4 text-white active:scale-[0.98] transition-transform"
+          style={{ background: "linear-gradient(135deg, #047857, #10b981)", boxShadow: "0 12px 30px -12px rgba(16,185,129,0.55)" }}
+        >
+          <ArrowUpCircle className="w-6 h-6 mb-2" />
+          <div className="font-display font-bold text-lg leading-tight">Entrée</div>
+          <div className="text-[11px] opacity-90">Argent reçu</div>
+        </Link>
+        <Link
+          to="/operations/new"
+          search={{ type: "sortie" }}
+          className="relative overflow-hidden rounded-2xl p-4 text-white active:scale-[0.98] transition-transform"
+          style={{ background: "linear-gradient(135deg, #991b1b, #ef4444)", boxShadow: "0 12px 30px -12px rgba(239,68,68,0.55)" }}
+        >
+          <ArrowDownCircle className="w-6 h-6 mb-2" />
+          <div className="font-display font-bold text-lg leading-tight">Sortie</div>
+          <div className="text-[11px] opacity-90">Argent dépensé</div>
+        </Link>
+      </section>
+
       <section>
         <div className="flex items-center justify-between mb-3">
           <h2 className="font-display text-lg font-semibold text-primary">Modes de paiement (jour)</h2>
@@ -157,7 +181,7 @@ function Dashboard() {
           <div className="bg-card rounded-2xl p-6 border border-border text-center">
             <p className="text-sm text-muted-foreground">Pas encore d'opération.</p>
             <Link
-              to="/operations/new"
+              to="/operations"
               className="inline-block mt-3 px-4 py-2 rounded-xl text-sm font-semibold text-primary-foreground"
               style={{ background: "var(--gradient-primary)" }}
             >
