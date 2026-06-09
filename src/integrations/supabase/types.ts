@@ -139,10 +139,6 @@ export type Database = {
       }
     }
     Functions: {
-      admin_create_vendeur: {
-        Args: { _full_name: string; _password: string; _phone: string }
-        Returns: string
-      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
