@@ -1,8 +1,9 @@
 import { createFileRoute, Outlet, redirect, Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
-import { LayoutDashboard, PlusCircle, History, LogOut } from "lucide-react";
+import { LayoutDashboard, PlusCircle, History, LogOut, Users } from "lucide-react";
 import logo from "@/assets/maestrabook-logo.png.asset.json";
+import { SyncBanner } from "@/components/sync-banner";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -19,6 +20,7 @@ function AuthedLayout() {
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [profile, setProfile] = useState<{ full_name: string | null; phone: string } | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     supabase
@@ -27,6 +29,13 @@ function AuthedLayout() {
       .eq("id", user.id)
       .maybeSingle()
       .then(({ data }) => setProfile(data));
+    supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", user.id)
+      .eq("role", "admin")
+      .maybeSingle()
+      .then(({ data }) => setIsAdmin(!!data));
   }, [user.id]);
 
   async function signOut() {
@@ -35,15 +44,18 @@ function AuthedLayout() {
   }
 
   const tabs: Array<{
-    to: "/dashboard" | "/operations/new" | "/historique";
+    to: "/dashboard" | "/operations" | "/historique" | "/utilisateurs";
     label: string;
     icon: typeof LayoutDashboard;
     primary?: boolean;
+    adminOnly?: boolean;
   }> = [
     { to: "/dashboard", label: "Accueil", icon: LayoutDashboard },
-    { to: "/operations/new", label: "Saisir", icon: PlusCircle, primary: true },
+    { to: "/operations", label: "Saisir", icon: PlusCircle, primary: true },
     { to: "/historique", label: "Historique", icon: History },
+    { to: "/utilisateurs", label: "Users", icon: Users, adminOnly: true },
   ];
+  const visibleTabs = tabs.filter((t) => !t.adminOnly || isAdmin);
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -68,6 +80,7 @@ function AuthedLayout() {
         </div>
       </header>
 
+      <SyncBanner />
       <main className="flex-1 pb-24">
         <div className="max-w-2xl mx-auto px-4 pt-5">
           <Outlet />
@@ -79,7 +92,7 @@ function AuthedLayout() {
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       >
         <div className="max-w-2xl mx-auto px-4 h-16 flex items-center justify-around">
-          {tabs.map((t) => {
+          {visibleTabs.map((t) => {
             const Icon = t.icon;
             const active = pathname.startsWith(t.to);
             if (t.primary) {
