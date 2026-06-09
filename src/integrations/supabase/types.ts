@@ -127,9 +127,22 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      users_overview: {
+        Row: {
+          created_at: string | null
+          full_name: string | null
+          id: string | null
+          phone: string | null
+          roles: string[] | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
+      admin_create_vendeur: {
+        Args: { _full_name: string; _password: string; _phone: string }
+        Returns: string
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
