@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowDownCircle, ArrowUpCircle, Trash2, Search } from "lucide-react";
+import { ArrowDownCircle, ArrowUpCircle, Trash2, Search, Download } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/historique")({
@@ -55,6 +55,15 @@ function History() {
   const [periode, setPeriode] = useState<Periode>("mois");
   const [typeFilter, setTypeFilter] = useState<"all" | "entree" | "sortie">("all");
   const [q, setQ] = useState("");
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: u }) => {
+      if (!u.user) return;
+      supabase.from("user_roles").select("role").eq("user_id", u.user.id).eq("role", "admin").maybeSingle()
+        .then(({ data }) => setIsAdmin(!!data));
+    });
+  }, []);
 
   const { data } = useQuery({
     queryKey: ["history-ops", periode],
@@ -105,9 +114,19 @@ function History() {
 
   return (
     <div className="space-y-4">
-      <header>
-        <h1 className="font-display text-2xl font-bold text-primary">Historique</h1>
-        <p className="text-sm text-muted-foreground">Filtre, recherche, supprime.</p>
+      <header className="flex items-start justify-between gap-3">
+        <div>
+          <h1 className="font-display text-2xl font-bold text-primary">Historique</h1>
+          <p className="text-sm text-muted-foreground">Filtre, recherche, supprime.</p>
+        </div>
+        {isAdmin && (
+          <button
+            onClick={() => exportCsv(ops)}
+            className="inline-flex items-center gap-1.5 h-9 px-3 rounded-xl bg-primary text-primary-foreground text-xs font-semibold"
+          >
+            <Download className="w-4 h-4" /> Export CSV
+          </button>
+        )}
       </header>
 
       <div className="flex gap-2 overflow-x-auto -mx-4 px-4 pb-1 scrollbar-none">
@@ -208,6 +227,31 @@ function History() {
       )}
     </div>
   );
+}
+
+function exportCsv(ops: Op[]) {
+  if (ops.length === 0) return toast.error("Rien à exporter");
+  const header = ["Date", "Type", "Montant (FCFA)", "Description", "Catégorie", "Mode", "Note"];
+  const rows = ops.map((o) => [
+    new Date(o.date_operation).toLocaleString("fr-FR"),
+    o.type,
+    String(o.montant),
+    o.description.replace(/"/g, '""'),
+    o.categorie,
+    o.mode_paiement,
+    (o.note ?? "").replace(/"/g, '""'),
+  ]);
+  const csv = [header, ...rows].map((r) => r.map((c) => `"${c}"`).join(",")).join("\n");
+  const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `maestrabook-${new Date().toISOString().slice(0, 10)}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+  toast.success(`${ops.length} ligne(s) exportée(s)`);
 }
 
 function Stat({ label, value, color }: { label: string; value: string; color: string }) {
