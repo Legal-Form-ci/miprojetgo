@@ -1,7 +1,7 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useState } from "react";
+import { useState, type FormEvent, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { createVendorAccount } from "@/lib/admin.functions";
 import { Users, Shield, User as UserIcon, Loader2, PlusCircle } from "lucide-react";
@@ -55,7 +55,7 @@ function UtilisateursPage() {
     onError: (error: Error) => toast.error(error.message || "Création impossible"),
   });
 
-  function submit(e: React.FormEvent) {
+  function submit(e: FormEvent) {
     e.preventDefault();
     const cleanedPhone = phone.replace(/\D/g, "");
     if (fullName.trim().length < 2) return toast.error("Nom vendeur requis");
@@ -151,7 +151,7 @@ function UtilisateursPage() {
   );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
     <label className="block space-y-1.5">
       <span className="text-xs font-semibold uppercase tracking-wide text-foreground/80">{label}</span>
