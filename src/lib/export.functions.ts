@@ -5,6 +5,8 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const exportSchema = z.object({
   startIso: z.string().datetime().nullable(),
+  typeFilter: z.enum(["all", "entree", "sortie"]).default("all"),
+  query: z.string().trim().max(80).default(""),
 });
 
 type ExportOperation = {
@@ -25,12 +27,14 @@ export const exportHistoryCsv = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => exportSchema.parse(input))
   .handler(async ({ data, context }) => {
-    const { data: isAdmin, error: roleError } = await context.supabase.rpc("has_role", {
-      _user_id: context.userId,
-      _role: "admin",
-    });
+    const { data: adminRole, error: roleError } = await context.supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", context.userId)
+      .eq("role", "admin")
+      .maybeSingle();
 
-    if (roleError || !isAdmin) {
+    if (roleError || !adminRole) {
       throw new Error("Export réservé à l'admin.");
     }
 
@@ -41,12 +45,21 @@ export const exportHistoryCsv = createServerFn({ method: "POST" })
       .limit(5000);
 
     if (data.startIso) request = request.gte("date_operation", data.startIso);
+    if (data.typeFilter !== "all") request = request.eq("type", data.typeFilter);
 
     const { data: rows, error } = await request;
     if (error) throw new Error("Export impossible pour le moment.");
 
+    const needle = data.query.toLowerCase();
+    const filtered = ((rows ?? []) as ExportOperation[]).filter((op) => {
+      if (!needle) return true;
+      return [op.description, op.categorie, op.mode_paiement].some((value) =>
+        value.toLowerCase().includes(needle),
+      );
+    });
+
     const header = ["Date", "Type", "Montant (FCFA)", "Description", "Catégorie", "Mode", "Note"];
-    const body = ((rows ?? []) as ExportOperation[]).map((op) => [
+    const body = filtered.map((op) => [
       new Date(op.date_operation).toLocaleString("fr-FR"),
       op.type,
       Number(op.montant),

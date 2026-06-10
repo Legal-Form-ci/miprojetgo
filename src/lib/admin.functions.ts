@@ -15,12 +15,14 @@ export const createVendorAccount = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => createVendorSchema.parse(input))
   .handler(async ({ data, context }) => {
-    const { data: isAdmin, error: roleError } = await context.supabase.rpc("has_role", {
-      _user_id: context.userId,
-      _role: "admin",
-    });
+    const { data: adminRole, error: roleError } = await context.supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", context.userId)
+      .eq("role", "admin")
+      .maybeSingle();
 
-    if (roleError || !isAdmin) {
+    if (roleError || !adminRole) {
       throw new Error("Seul l'admin peut créer des comptes vendeurs.");
     }
 
