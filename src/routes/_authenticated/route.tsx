@@ -1,7 +1,7 @@
 import { createFileRoute, Outlet, redirect, Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
-import { LayoutDashboard, PlusCircle, History, LogOut, Users } from "lucide-react";
+import { LayoutDashboard, PlusCircle, History, LogOut, Users, Camera, ListChecks } from "lucide-react";
 import logo from "@/assets/maestrabook-logo.png.asset.json";
 import { SyncBanner } from "@/components/sync-banner";
 
@@ -44,7 +44,7 @@ function AuthedLayout() {
   }
 
   const tabs: Array<{
-    to: "/dashboard" | "/operations" | "/historique" | "/utilisateurs";
+    to: "/dashboard" | "/operations" | "/historique" | "/import" | "/synchronisation" | "/utilisateurs";
     label: string;
     icon: typeof LayoutDashboard;
     primary?: boolean;
@@ -52,7 +52,9 @@ function AuthedLayout() {
   }> = [
     { to: "/dashboard", label: "Accueil", icon: LayoutDashboard },
     { to: "/operations", label: "Saisir", icon: PlusCircle, primary: true },
+    { to: "/import", label: "Import", icon: Camera },
     { to: "/historique", label: "Historique", icon: History },
+    { to: "/synchronisation", label: "Sync", icon: ListChecks },
     { to: "/utilisateurs", label: "Users", icon: Users, adminOnly: true },
   ];
   const visibleTabs = tabs.filter((t) => !t.adminOnly || isAdmin);
@@ -91,7 +93,7 @@ function AuthedLayout() {
         className="fixed bottom-0 inset-x-0 z-30 border-t border-border bg-background/95 backdrop-blur"
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       >
-        <div className="max-w-2xl mx-auto px-4 h-16 flex items-center justify-around">
+        <div className="max-w-2xl mx-auto px-2 h-16 flex items-center justify-around">
           {visibleTabs.map((t) => {
             const Icon = t.icon;
             const active = pathname.startsWith(t.to);

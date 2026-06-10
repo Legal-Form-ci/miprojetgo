@@ -6,6 +6,7 @@ import { Camera, CheckCircle2, AlertTriangle, Loader2, Save, XCircle } from "luc
 import { toast } from "sonner";
 
 import { analyzeImportLines } from "@/lib/import-ai.functions";
+import type { ValidatedImportLine } from "@/lib/import-ai";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/import")({
@@ -13,7 +14,7 @@ export const Route = createFileRoute("/_authenticated/import")({
   component: ImportPage,
 });
 
-type ValidLine = Awaited<ReturnType<typeof analyzeImportLines>>["lines"][number];
+type ValidLine = ValidatedImportLine;
 
 function fmt(n: number) {
   return new Intl.NumberFormat("fr-FR").format(Math.round(n));
