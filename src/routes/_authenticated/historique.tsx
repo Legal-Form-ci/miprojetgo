@@ -251,29 +251,16 @@ function History() {
   );
 }
 
-function exportCsv(ops: Op[]) {
-  if (ops.length === 0) return toast.error("Rien à exporter");
-  const header = ["Date", "Type", "Montant (FCFA)", "Description", "Catégorie", "Mode", "Note"];
-  const rows = ops.map((o) => [
-    new Date(o.date_operation).toLocaleString("fr-FR"),
-    o.type,
-    String(o.montant),
-    o.description.replace(/"/g, '""'),
-    o.categorie,
-    o.mode_paiement,
-    (o.note ?? "").replace(/"/g, '""'),
-  ]);
-  const csv = [header, ...rows].map((r) => r.map((c) => `"${c}"`).join(",")).join("\n");
+function downloadCsv(csv: string, filename: string) {
   const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `maestrabook-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.download = filename;
   document.body.appendChild(a);
   a.click();
   a.remove();
   URL.revokeObjectURL(url);
-  toast.success(`${ops.length} ligne(s) exportée(s)`);
 }
 
 function Stat({ label, value, color }: { label: string; value: string; color: string }) {
