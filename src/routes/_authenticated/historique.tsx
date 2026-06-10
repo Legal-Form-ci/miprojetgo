@@ -1,7 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { exportHistoryCsv } from "@/lib/export.functions";
 import { ArrowDownCircle, ArrowUpCircle, Trash2, Search, Download } from "lucide-react";
 import { toast } from "sonner";
 
@@ -52,10 +54,12 @@ function fmt(n: number) {
 
 function History() {
   const qc = useQueryClient();
+  const exportHistory = useServerFn(exportHistoryCsv);
   const [periode, setPeriode] = useState<Periode>("mois");
   const [typeFilter, setTypeFilter] = useState<"all" | "entree" | "sortie">("all");
   const [q, setQ] = useState("");
   const [isAdmin, setIsAdmin] = useState(false);
+  const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: u }) => {
@@ -112,6 +116,23 @@ function History() {
     onError: () => toast.error("Suppression refusée"),
   });
 
+  async function handleExport() {
+    setExporting(true);
+    try {
+      const start = startOf(periode);
+      const res = await exportHistory({
+        data: { startIso: start ? start.toISOString() : null, typeFilter, query: q.trim() },
+      });
+      if (res.count === 0) return toast.error("Rien à exporter");
+      downloadCsv(res.csv, res.filename);
+      toast.success(`${res.count} ligne(s) exportée(s)`);
+    } catch (error) {
+      toast.error((error as Error).message || "Export refusé");
+    } finally {
+      setExporting(false);
+    }
+  }
+
   return (
     <div className="space-y-4">
       <header className="flex items-start justify-between gap-3">
@@ -121,10 +142,11 @@ function History() {
         </div>
         {isAdmin && (
           <button
-            onClick={() => exportCsv(ops)}
+            onClick={handleExport}
+            disabled={exporting}
             className="inline-flex items-center gap-1.5 h-9 px-3 rounded-xl bg-primary text-primary-foreground text-xs font-semibold"
           >
-            <Download className="w-4 h-4" /> Export CSV
+            <Download className="w-4 h-4" /> {exporting ? "Export…" : "Export CSV"}
           </button>
         )}
       </header>
@@ -229,29 +251,16 @@ function History() {
   );
 }
 
-function exportCsv(ops: Op[]) {
-  if (ops.length === 0) return toast.error("Rien à exporter");
-  const header = ["Date", "Type", "Montant (FCFA)", "Description", "Catégorie", "Mode", "Note"];
-  const rows = ops.map((o) => [
-    new Date(o.date_operation).toLocaleString("fr-FR"),
-    o.type,
-    String(o.montant),
-    o.description.replace(/"/g, '""'),
-    o.categorie,
-    o.mode_paiement,
-    (o.note ?? "").replace(/"/g, '""'),
-  ]);
-  const csv = [header, ...rows].map((r) => r.map((c) => `"${c}"`).join(",")).join("\n");
+function downloadCsv(csv: string, filename: string) {
   const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `maestrabook-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.download = filename;
   document.body.appendChild(a);
   a.click();
   a.remove();
   URL.revokeObjectURL(url);
-  toast.success(`${ops.length} ligne(s) exportée(s)`);
 }
 
 function Stat({ label, value, color }: { label: string; value: string; color: string }) {

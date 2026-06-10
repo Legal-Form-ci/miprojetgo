@@ -13,6 +13,8 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedUtilisateursRouteImport } from './routes/_authenticated/utilisateurs'
+import { Route as AuthenticatedSynchronisationRouteImport } from './routes/_authenticated/synchronisation'
+import { Route as AuthenticatedImportRouteImport } from './routes/_authenticated/import'
 import { Route as AuthenticatedHistoriqueRouteImport } from './routes/_authenticated/historique'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedOperationsIndexRouteImport } from './routes/_authenticated/operations.index'
@@ -38,6 +40,17 @@ const AuthenticatedUtilisateursRoute =
     path: '/utilisateurs',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedSynchronisationRoute =
+  AuthenticatedSynchronisationRouteImport.update({
+    id: '/synchronisation',
+    path: '/synchronisation',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedImportRoute = AuthenticatedImportRouteImport.update({
+  id: '/import',
+  path: '/import',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedHistoriqueRoute = AuthenticatedHistoriqueRouteImport.update({
   id: '/historique',
   path: '/historique',
@@ -66,6 +79,8 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/historique': typeof AuthenticatedHistoriqueRoute
+  '/import': typeof AuthenticatedImportRoute
+  '/synchronisation': typeof AuthenticatedSynchronisationRoute
   '/utilisateurs': typeof AuthenticatedUtilisateursRoute
   '/operations/new': typeof AuthenticatedOperationsNewRoute
   '/operations/': typeof AuthenticatedOperationsIndexRoute
@@ -75,6 +90,8 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/historique': typeof AuthenticatedHistoriqueRoute
+  '/import': typeof AuthenticatedImportRoute
+  '/synchronisation': typeof AuthenticatedSynchronisationRoute
   '/utilisateurs': typeof AuthenticatedUtilisateursRoute
   '/operations/new': typeof AuthenticatedOperationsNewRoute
   '/operations': typeof AuthenticatedOperationsIndexRoute
@@ -86,6 +103,8 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/historique': typeof AuthenticatedHistoriqueRoute
+  '/_authenticated/import': typeof AuthenticatedImportRoute
+  '/_authenticated/synchronisation': typeof AuthenticatedSynchronisationRoute
   '/_authenticated/utilisateurs': typeof AuthenticatedUtilisateursRoute
   '/_authenticated/operations/new': typeof AuthenticatedOperationsNewRoute
   '/_authenticated/operations/': typeof AuthenticatedOperationsIndexRoute
@@ -97,6 +116,8 @@ export interface FileRouteTypes {
     | '/auth'
     | '/dashboard'
     | '/historique'
+    | '/import'
+    | '/synchronisation'
     | '/utilisateurs'
     | '/operations/new'
     | '/operations/'
@@ -106,6 +127,8 @@ export interface FileRouteTypes {
     | '/auth'
     | '/dashboard'
     | '/historique'
+    | '/import'
+    | '/synchronisation'
     | '/utilisateurs'
     | '/operations/new'
     | '/operations'
@@ -116,6 +139,8 @@ export interface FileRouteTypes {
     | '/auth'
     | '/_authenticated/dashboard'
     | '/_authenticated/historique'
+    | '/_authenticated/import'
+    | '/_authenticated/synchronisation'
     | '/_authenticated/utilisateurs'
     | '/_authenticated/operations/new'
     | '/_authenticated/operations/'
@@ -157,6 +182,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedUtilisateursRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/synchronisation': {
+      id: '/_authenticated/synchronisation'
+      path: '/synchronisation'
+      fullPath: '/synchronisation'
+      preLoaderRoute: typeof AuthenticatedSynchronisationRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/import': {
+      id: '/_authenticated/import'
+      path: '/import'
+      fullPath: '/import'
+      preLoaderRoute: typeof AuthenticatedImportRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/historique': {
       id: '/_authenticated/historique'
       path: '/historique'
@@ -191,6 +230,8 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedHistoriqueRoute: typeof AuthenticatedHistoriqueRoute
+  AuthenticatedImportRoute: typeof AuthenticatedImportRoute
+  AuthenticatedSynchronisationRoute: typeof AuthenticatedSynchronisationRoute
   AuthenticatedUtilisateursRoute: typeof AuthenticatedUtilisateursRoute
   AuthenticatedOperationsNewRoute: typeof AuthenticatedOperationsNewRoute
   AuthenticatedOperationsIndexRoute: typeof AuthenticatedOperationsIndexRoute
@@ -199,6 +240,8 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedHistoriqueRoute: AuthenticatedHistoriqueRoute,
+  AuthenticatedImportRoute: AuthenticatedImportRoute,
+  AuthenticatedSynchronisationRoute: AuthenticatedSynchronisationRoute,
   AuthenticatedUtilisateursRoute: AuthenticatedUtilisateursRoute,
   AuthenticatedOperationsNewRoute: AuthenticatedOperationsNewRoute,
   AuthenticatedOperationsIndexRoute: AuthenticatedOperationsIndexRoute,
@@ -215,13 +258,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

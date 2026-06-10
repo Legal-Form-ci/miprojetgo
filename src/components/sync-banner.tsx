@@ -1,6 +1,15 @@
 import { useEffect, useState } from "react";
-import { CloudOff, CloudUpload, CheckCircle2, RefreshCcw, AlertTriangle, X } from "lucide-react";
-import { flushQueue, getQueue, subscribeQueue, subscribeProgress, type QueuedOperation } from "@/lib/offline-queue";
+import { CloudOff, CloudUpload, CheckCircle2, RefreshCcw, AlertTriangle, X, ListChecks } from "lucide-react";
+import {
+  flushQueue,
+  getQueue,
+  getSyncLog,
+  subscribeQueue,
+  subscribeProgress,
+  subscribeSyncLog,
+  type QueuedOperation,
+  type SyncLogEntry,
+} from "@/lib/offline-queue";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
@@ -13,6 +22,7 @@ export function SyncBanner() {
   const [status, setStatus] = useState<Status>("idle");
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
   const [open, setOpen] = useState(false);
+  const [log, setLog] = useState<SyncLogEntry[]>(() => getSyncLog());
 
   useEffect(() => {
     const refresh = () => {
@@ -21,7 +31,8 @@ export function SyncBanner() {
     };
     const unsub = subscribeQueue(refresh);
     const unsubP = subscribeProgress((d) => setProgress({ done: d.done, total: d.total }));
-    return () => { unsub(); unsubP(); };
+    const unsubLog = subscribeSyncLog(() => setLog(getSyncLog()));
+    return () => { unsub(); unsubP(); unsubLog(); };
   }, []);
 
   // Auto-sync when coming online
@@ -39,6 +50,7 @@ export function SyncBanner() {
     const res = await flushQueue();
     setProgress(null);
     setQueue(getQueue());
+    setLog(getSyncLog());
     if (res.failed === 0) {
       setStatus("success");
       toast.success(`${res.ok} opération${res.ok > 1 ? "s" : ""} synchronisée${res.ok > 1 ? "s" : ""}`);
@@ -86,14 +98,17 @@ export function SyncBanner() {
           <div className="bg-card w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl max-h-[80vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
             <div className="p-4 border-b border-border flex items-center justify-between">
               <div>
-                <h3 className="font-display text-lg font-bold text-primary">Synchronisation</h3>
-                <p className="text-xs text-muted-foreground">{queue.length} opération(s) en file</p>
+                <h3 className="font-display text-lg font-bold text-primary">Journal de synchronisation</h3>
+                <p className="text-xs text-muted-foreground">{queue.length} en file · {log.length} tentative(s)</p>
               </div>
               <button onClick={() => setOpen(false)} className="w-9 h-9 rounded-full hover:bg-muted flex items-center justify-center"><X className="w-4 h-4" /></button>
             </div>
             <div className="flex-1 overflow-auto p-4 space-y-2">
+              <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-muted-foreground">
+                <CloudUpload className="w-4 h-4" /> File d'attente
+              </div>
               {queue.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-8">File vide — tout est synchronisé.</p>
+                <p className="text-sm text-muted-foreground rounded-xl border border-border p-4 text-center">File vide — tout est synchronisé.</p>
               ) : queue.map((q) => (
                 <div key={q.id} className="border border-border rounded-xl p-3 text-sm">
                   <div className="flex justify-between">
@@ -105,6 +120,25 @@ export function SyncBanner() {
                   <div className="text-[11px] text-muted-foreground mt-0.5">
                     {q.categorie} · {q.mode_paiement} · ajoutée {new Date(q.queued_at).toLocaleString("fr-FR")}
                   </div>
+                </div>
+              ))}
+              <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-muted-foreground pt-3">
+                <ListChecks className="w-4 h-4" /> Tentatives
+              </div>
+              {log.length === 0 ? (
+                <p className="text-sm text-muted-foreground rounded-xl border border-border p-4 text-center">Aucune tentative enregistrée.</p>
+              ) : log.map((entry) => (
+                <div key={entry.id} className="border border-border rounded-xl p-3 text-sm">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="font-semibold truncate">{entry.description}</div>
+                      <div className="text-[11px] text-muted-foreground">{new Date(entry.timestamp).toLocaleString("fr-FR")}</div>
+                    </div>
+                    <span className={`text-[10px] font-bold uppercase px-2 py-1 rounded-full ${entry.status === "success" ? "bg-emerald-100 text-emerald-800" : "bg-red-100 text-red-800"}`}>
+                      {entry.status === "success" ? "Succès" : "Échec"}
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2 break-words">{entry.message}</p>
                 </div>
               ))}
             </div>
