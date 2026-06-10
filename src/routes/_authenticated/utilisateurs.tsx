@@ -1,7 +1,11 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Users, Shield, User as UserIcon } from "lucide-react";
+import { createVendorAccount } from "@/lib/admin.functions";
+import { Users, Shield, User as UserIcon, Loader2, PlusCircle } from "lucide-react";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/utilisateurs")({
   head: () => ({ meta: [{ title: "Utilisateurs — MaestraBook" }] }),
@@ -22,6 +26,11 @@ export const Route = createFileRoute("/_authenticated/utilisateurs")({
 type Row = { id: string; full_name: string | null; phone: string; created_at: string; roles: string[] };
 
 function UtilisateursPage() {
+  const qc = useQueryClient();
+  const createVendor = useServerFn(createVendorAccount);
+  const [fullName, setFullName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [password, setPassword] = useState("");
   const { data, isLoading } = useQuery({
     queryKey: ["users-overview"],
     queryFn: async () => {
@@ -34,6 +43,27 @@ function UtilisateursPage() {
     },
   });
 
+  const createMutation = useMutation({
+    mutationFn: () => createVendor({ data: { fullName, phone, password } }),
+    onSuccess: (vendor) => {
+      toast.success(`Vendeur créé : ${vendor.phone}`);
+      setFullName("");
+      setPhone("");
+      setPassword("");
+      qc.invalidateQueries({ queryKey: ["users-overview"] });
+    },
+    onError: (error: Error) => toast.error(error.message || "Création impossible"),
+  });
+
+  function submit(e: React.FormEvent) {
+    e.preventDefault();
+    const cleanedPhone = phone.replace(/\D/g, "");
+    if (fullName.trim().length < 2) return toast.error("Nom vendeur requis");
+    if (cleanedPhone.length < 8 || cleanedPhone.length > 15) return toast.error("Téléphone invalide");
+    if (password.length < 6) return toast.error("Mot de passe temporaire trop court");
+    createMutation.mutate();
+  }
+
   return (
     <div className="space-y-5">
       <header>
@@ -42,6 +72,52 @@ function UtilisateursPage() {
         </h1>
         <p className="text-sm text-muted-foreground mt-1">Gère les comptes (admin uniquement).</p>
       </header>
+
+      <form onSubmit={submit} className="bg-card rounded-2xl p-4 border border-border space-y-3" style={{ boxShadow: "var(--shadow-card)" }}>
+        <div className="flex items-center gap-2 font-display text-lg font-bold text-primary">
+          <PlusCircle className="w-5 h-5" /> Ajouter un vendeur
+        </div>
+        <div className="grid gap-3">
+          <Field label="Nom">
+            <input
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              placeholder="Nom du vendeur"
+              maxLength={80}
+              className="w-full h-11 px-3 rounded-xl bg-background border border-border focus:outline-none focus:ring-2 focus:ring-ring text-sm"
+            />
+          </Field>
+          <Field label="Téléphone">
+            <input
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder="07 00 00 00 00"
+              inputMode="numeric"
+              maxLength={20}
+              className="w-full h-11 px-3 rounded-xl bg-background border border-border focus:outline-none focus:ring-2 focus:ring-ring text-sm tabular-nums"
+            />
+          </Field>
+          <Field label="Mot de passe temporaire">
+            <input
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Minimum 6 caractères"
+              type="text"
+              maxLength={64}
+              className="w-full h-11 px-3 rounded-xl bg-background border border-border focus:outline-none focus:ring-2 focus:ring-ring text-sm"
+            />
+          </Field>
+        </div>
+        <button
+          type="submit"
+          disabled={createMutation.isPending}
+          className="w-full h-11 rounded-xl font-semibold text-primary-foreground disabled:opacity-60 flex items-center justify-center gap-2"
+          style={{ background: "var(--gradient-primary)" }}
+        >
+          {createMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <PlusCircle className="w-4 h-4" />}
+          Créer le vendeur
+        </button>
+      </form>
 
       {isLoading ? (
         <p className="text-sm text-muted-foreground">Chargement…</p>
@@ -71,10 +147,15 @@ function UtilisateursPage() {
         </ul>
       )}
 
-      <div className="rounded-2xl border border-dashed border-border p-4 text-sm text-muted-foreground">
-        <p className="font-semibold text-foreground mb-1">Ajouter un vendeur</p>
-        <p>La création de comptes vendeurs sera disponible dans la prochaine mise à jour. Contacte le support pour ajouter un compte en attendant.</p>
-      </div>
     </div>
+  );
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <label className="block space-y-1.5">
+      <span className="text-xs font-semibold uppercase tracking-wide text-foreground/80">{label}</span>
+      {children}
+    </label>
   );
 }
