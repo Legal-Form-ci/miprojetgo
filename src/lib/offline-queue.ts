@@ -92,7 +92,13 @@ export async function flushQueue(): Promise<{ ok: number; failed: number }> {
   for (let i = 0; i < list.length; i++) {
     const item = list[i];
     const { id: _id, queued_at: _q, ...payload } = item;
-    const { error } = await supabase.from("operations").insert(payload);
+    let error: { message?: string } | null = null;
+    try {
+      const result = await supabase.from("operations").insert(payload);
+      error = result.error;
+    } catch (e) {
+      error = { message: (e as Error)?.message || "Erreur réseau" };
+    }
     if (error) {
       remaining.push(item);
       appendLog({
