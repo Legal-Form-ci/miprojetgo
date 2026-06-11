@@ -174,6 +174,13 @@ function History() {
               <FileText className="w-4 h-4" /> {reporting ? "Rapport…" : "Rapport PDF"}
             </button>
             <button
+              onClick={handleExport}
+              disabled={exporting}
+              className="inline-flex items-center gap-1.5 h-9 px-3 rounded-xl bg-card border border-border text-foreground text-xs font-semibold"
+            >
+              <Download className="w-4 h-4" /> {exporting ? "CSV…" : "CSV"}
+            </button>
+          </div>
         )}
       </header>
 
