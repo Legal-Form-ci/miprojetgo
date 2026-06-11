@@ -69,6 +69,25 @@ export const exportHistoryCsv = createServerFn({ method: "POST" })
       op.note,
     ]);
 
+    // Journalise l'export (audit côté serveur)
+    const { data: profile } = await context.supabase
+      .from("profiles")
+      .select("phone")
+      .eq("id", context.userId)
+      .maybeSingle();
+    await (context.supabase as unknown as {
+      from: (t: string) => { insert: (row: Record<string, unknown>) => Promise<{ error: unknown }> };
+    })
+      .from("export_audit_logs")
+      .insert({
+        admin_user_id: context.userId,
+        admin_phone: profile?.phone ?? null,
+        periode_start: data.startIso,
+        type_filter: data.typeFilter,
+        query_text: data.query || null,
+        rows_count: body.length,
+      });
+
     return {
       filename: `maestrabook-${new Date().toISOString().slice(0, 10)}.csv`,
       csv: [header, ...body].map((row) => row.map(csvCell).join(",")).join("\n"),

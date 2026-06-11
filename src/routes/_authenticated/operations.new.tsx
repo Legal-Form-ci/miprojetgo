@@ -10,6 +10,11 @@ export const Route = createFileRoute("/_authenticated/operations/new")({
   head: () => ({ meta: [{ title: "Nouvelle opération — MaestraBook" }] }),
   validateSearch: (s: Record<string, unknown>) => ({
     type: (s.type === "sortie" ? "sortie" : "entree") as "entree" | "sortie",
+    montant: typeof s.montant === "string" ? s.montant : undefined,
+    description: typeof s.description === "string" ? s.description : undefined,
+    categorie: typeof s.categorie === "string" ? s.categorie : undefined,
+    mode: typeof s.mode === "string" ? s.mode : undefined,
+    note: typeof s.note === "string" ? s.note : undefined,
   }),
   component: NewOperation,
 });
@@ -20,13 +25,18 @@ const PAIEMENTS = ["Espèces", "Wave", "MTN Money", "Orange Money", "Moov Money"
 function NewOperation() {
   const navigate = useNavigate();
   const qc = useQueryClient();
-  const { type } = Route.useSearch();
+  const search = Route.useSearch();
+  const { type } = search;
   const isIn = type === "entree";
-  const [montant, setMontant] = useState("");
-  const [description, setDescription] = useState("");
-  const [categorie, setCategorie] = useState(CATEGORIES[0]);
-  const [mode, setMode] = useState(PAIEMENTS[0]);
-  const [note, setNote] = useState("");
+  const [montant, setMontant] = useState(search.montant ?? "");
+  const [description, setDescription] = useState(search.description ?? "");
+  const [categorie, setCategorie] = useState(
+    search.categorie && CATEGORIES.includes(search.categorie) ? search.categorie : CATEGORIES[0],
+  );
+  const [mode, setMode] = useState(
+    search.mode && PAIEMENTS.includes(search.mode) ? search.mode : PAIEMENTS[0],
+  );
+  const [note, setNote] = useState(search.note ?? "");
   const [date, setDate] = useState(() => {
     const d = new Date();
     d.setMinutes(d.getMinutes() - d.getTimezoneOffset());

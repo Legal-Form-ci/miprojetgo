@@ -1,7 +1,7 @@
 import { createFileRoute, Outlet, redirect, Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
-import { LayoutDashboard, PlusCircle, History, LogOut, Users, Camera, ListChecks } from "lucide-react";
+import { LayoutDashboard, PlusCircle, History, LogOut, Users, Camera, ListChecks, Mic } from "lucide-react";
 import logo from "@/assets/maestrabook-logo.png.asset.json";
 import { SyncBanner } from "@/components/sync-banner";
 
@@ -44,13 +44,14 @@ function AuthedLayout() {
   }
 
   const tabs: Array<{
-    to: "/dashboard" | "/operations" | "/historique" | "/import" | "/synchronisation" | "/utilisateurs";
+    to: "/dashboard" | "/operations" | "/historique" | "/import" | "/synchronisation" | "/utilisateurs" | "/voix";
     label: string;
     icon: typeof LayoutDashboard;
     primary?: boolean;
     adminOnly?: boolean;
   }> = [
     { to: "/dashboard", label: "Accueil", icon: LayoutDashboard },
+    { to: "/voix", label: "Voix", icon: Mic },
     { to: "/operations", label: "Saisir", icon: PlusCircle, primary: true },
     { to: "/import", label: "Import", icon: Camera },
     { to: "/historique", label: "Historique", icon: History },
