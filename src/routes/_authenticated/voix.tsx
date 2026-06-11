@@ -12,7 +12,7 @@ export const Route = createFileRoute("/_authenticated/voix")({
   component: VoicePage,
 });
 
-type SpeechCtor = new () => {
+type SpeechRec = {
   lang: string;
   continuous: boolean;
   interimResults: boolean;
@@ -20,10 +20,11 @@ type SpeechCtor = new () => {
   start: () => void;
   stop: () => void;
   abort: () => void;
-  onresult: ((event: { results: ArrayLike<ArrayLike<{ transcript: string }>> & { length: number } }) => void) | null;
+  onresult: ((event: { results: ArrayLike<ArrayLike<{ transcript: string }> & { isFinal?: boolean }> & { length: number } }) => void) | null;
   onerror: ((event: { error: string }) => void) | null;
   onend: (() => void) | null;
 };
+type SpeechCtor = new () => SpeechRec;
 
 function getRecognitionCtor(): SpeechCtor | null {
   if (typeof window === "undefined") return null;
@@ -40,7 +41,7 @@ function VoicePage() {
   const [analyzing, setAnalyzing] = useState(false);
   const [result, setResult] = useState<VoiceParsedOperation | null>(null);
   const [supported, setSupported] = useState<boolean | null>(null);
-  const recRef = useRef<ReturnType<SpeechCtor> | null>(null);
+  const recRef = useRef<SpeechRec | null>(null);
 
   useEffect(() => {
     setSupported(!!getRecognitionCtor());
