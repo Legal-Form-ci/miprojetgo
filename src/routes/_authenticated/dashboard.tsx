@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowDownCircle, ArrowUpCircle, Wallet, Sparkles } from "lucide-react";
+import { ArrowDownCircle, ArrowUpCircle, Wallet, Sparkles, Mic } from "lucide-react";
 import logo from "@/assets/maestrabook-logo.png.asset.json";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
@@ -136,6 +136,20 @@ function Dashboard() {
           <div className="text-[11px] opacity-90">Argent dépensé</div>
         </Link>
       </section>
+
+      <Link
+        to="/voix"
+        className="relative overflow-hidden rounded-2xl p-4 flex items-center gap-4 text-[#3a2410] active:scale-[0.98] transition-transform"
+        style={{ background: "var(--gradient-gold)", boxShadow: "0 14px 32px -14px rgba(217,164,65,0.65)" }}
+      >
+        <span className="w-14 h-14 rounded-full bg-white/40 flex items-center justify-center shrink-0 backdrop-blur">
+          <Mic className="w-7 h-7" />
+        </span>
+        <div className="min-w-0">
+          <div className="font-display font-bold text-lg leading-tight">Saisie vocale</div>
+          <div className="text-xs opacity-80">Parle, l'IA remplit le formulaire pour toi.</div>
+        </div>
+      </Link>
 
       <section>
         <div className="flex items-center justify-between mb-3">
