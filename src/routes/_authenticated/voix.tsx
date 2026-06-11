@@ -58,6 +58,31 @@ function greetingFor(name: string) {
   return `${greet} ${name}. Je t'écoute.`;
 }
 
+// Supprime les répétitions consécutives ("deux deux deux bouteilles" -> "deux bouteilles")
+// et les segments répétés que la reconnaissance vocale peut accumuler.
+function dedupeWords(text: string): string {
+  const tokens = text.split(/\s+/).filter(Boolean);
+  const out: string[] = [];
+  for (const tok of tokens) {
+    if (out.length && out[out.length - 1].toLowerCase() === tok.toLowerCase()) continue;
+    out.push(tok);
+  }
+  // Supprime les n-grammes répétés (ex: "deux bouteilles deux bouteilles")
+  for (let n = 6; n >= 2; n--) {
+    let i = 0;
+    while (i + 2 * n <= out.length) {
+      const a = out.slice(i, i + n).join(" ").toLowerCase();
+      const b = out.slice(i + n, i + 2 * n).join(" ").toLowerCase();
+      if (a === b) {
+        out.splice(i + n, n);
+      } else {
+        i++;
+      }
+    }
+  }
+  return out.join(" ");
+}
+
 function VoicePage() {
   const navigate = useNavigate();
   const parse = useServerFn(parseVoiceOperation);
