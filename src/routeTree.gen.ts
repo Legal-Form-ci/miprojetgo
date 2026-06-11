@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedVoixRouteImport } from './routes/_authenticated/voix'
 import { Route as AuthenticatedUtilisateursRouteImport } from './routes/_authenticated/utilisateurs'
 import { Route as AuthenticatedSynchronisationRouteImport } from './routes/_authenticated/synchronisation'
 import { Route as AuthenticatedImportRouteImport } from './routes/_authenticated/import'
@@ -33,6 +34,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedVoixRoute = AuthenticatedVoixRouteImport.update({
+  id: '/voix',
+  path: '/voix',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedUtilisateursRoute =
   AuthenticatedUtilisateursRouteImport.update({
@@ -82,6 +88,7 @@ export interface FileRoutesByFullPath {
   '/import': typeof AuthenticatedImportRoute
   '/synchronisation': typeof AuthenticatedSynchronisationRoute
   '/utilisateurs': typeof AuthenticatedUtilisateursRoute
+  '/voix': typeof AuthenticatedVoixRoute
   '/operations/new': typeof AuthenticatedOperationsNewRoute
   '/operations/': typeof AuthenticatedOperationsIndexRoute
 }
@@ -93,6 +100,7 @@ export interface FileRoutesByTo {
   '/import': typeof AuthenticatedImportRoute
   '/synchronisation': typeof AuthenticatedSynchronisationRoute
   '/utilisateurs': typeof AuthenticatedUtilisateursRoute
+  '/voix': typeof AuthenticatedVoixRoute
   '/operations/new': typeof AuthenticatedOperationsNewRoute
   '/operations': typeof AuthenticatedOperationsIndexRoute
 }
@@ -106,6 +114,7 @@ export interface FileRoutesById {
   '/_authenticated/import': typeof AuthenticatedImportRoute
   '/_authenticated/synchronisation': typeof AuthenticatedSynchronisationRoute
   '/_authenticated/utilisateurs': typeof AuthenticatedUtilisateursRoute
+  '/_authenticated/voix': typeof AuthenticatedVoixRoute
   '/_authenticated/operations/new': typeof AuthenticatedOperationsNewRoute
   '/_authenticated/operations/': typeof AuthenticatedOperationsIndexRoute
 }
@@ -119,6 +128,7 @@ export interface FileRouteTypes {
     | '/import'
     | '/synchronisation'
     | '/utilisateurs'
+    | '/voix'
     | '/operations/new'
     | '/operations/'
   fileRoutesByTo: FileRoutesByTo
@@ -130,6 +140,7 @@ export interface FileRouteTypes {
     | '/import'
     | '/synchronisation'
     | '/utilisateurs'
+    | '/voix'
     | '/operations/new'
     | '/operations'
   id:
@@ -142,6 +153,7 @@ export interface FileRouteTypes {
     | '/_authenticated/import'
     | '/_authenticated/synchronisation'
     | '/_authenticated/utilisateurs'
+    | '/_authenticated/voix'
     | '/_authenticated/operations/new'
     | '/_authenticated/operations/'
   fileRoutesById: FileRoutesById
@@ -174,6 +186,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/voix': {
+      id: '/_authenticated/voix'
+      path: '/voix'
+      fullPath: '/voix'
+      preLoaderRoute: typeof AuthenticatedVoixRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/utilisateurs': {
       id: '/_authenticated/utilisateurs'
@@ -233,6 +252,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedImportRoute: typeof AuthenticatedImportRoute
   AuthenticatedSynchronisationRoute: typeof AuthenticatedSynchronisationRoute
   AuthenticatedUtilisateursRoute: typeof AuthenticatedUtilisateursRoute
+  AuthenticatedVoixRoute: typeof AuthenticatedVoixRoute
   AuthenticatedOperationsNewRoute: typeof AuthenticatedOperationsNewRoute
   AuthenticatedOperationsIndexRoute: typeof AuthenticatedOperationsIndexRoute
 }
@@ -243,6 +263,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedImportRoute: AuthenticatedImportRoute,
   AuthenticatedSynchronisationRoute: AuthenticatedSynchronisationRoute,
   AuthenticatedUtilisateursRoute: AuthenticatedUtilisateursRoute,
+  AuthenticatedVoixRoute: AuthenticatedVoixRoute,
   AuthenticatedOperationsNewRoute: AuthenticatedOperationsNewRoute,
   AuthenticatedOperationsIndexRoute: AuthenticatedOperationsIndexRoute,
 }
@@ -258,3 +279,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
