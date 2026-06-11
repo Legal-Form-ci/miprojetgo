@@ -143,7 +143,7 @@ export const parseVoiceOperation = createServerFn({ method: "POST" })
 
     let price_source: "ia" | "historique" | "manuel" = montant ? "ia" : "manuel";
     if (!montant && description.length >= 3) {
-      const found = await findHistoricalPrice(context, description);
+      const found = await findHistoricalPrice(context as unknown as AuthCtx, description);
       if (found) {
         montant = found;
         price_source = "historique";
