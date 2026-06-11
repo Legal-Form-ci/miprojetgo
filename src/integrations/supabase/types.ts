@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      export_audit_logs: {
+        Row: {
+          admin_phone: string | null
+          admin_user_id: string
+          created_at: string
+          id: string
+          periode_start: string | null
+          query_text: string | null
+          rows_count: number
+          type_filter: string
+        }
+        Insert: {
+          admin_phone?: string | null
+          admin_user_id: string
+          created_at?: string
+          id?: string
+          periode_start?: string | null
+          query_text?: string | null
+          rows_count?: number
+          type_filter?: string
+        }
+        Update: {
+          admin_phone?: string | null
+          admin_user_id?: string
+          created_at?: string
+          id?: string
+          periode_start?: string | null
+          query_text?: string | null
+          rows_count?: number
+          type_filter?: string
+        }
+        Relationships: []
+      }
       import_sessions: {
         Row: {
           created_at: string
