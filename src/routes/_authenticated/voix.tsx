@@ -5,6 +5,7 @@ import { Mic, MicOff, Loader2, Sparkles, ArrowRight, AlertCircle } from "lucide-
 import { toast } from "sonner";
 
 import { parseVoiceOperation, type VoiceParsedOperation } from "@/lib/voice-parse.functions";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/voix")({
   head: () => ({ meta: [{ title: "Saisie vocale — MaestraBook" }] }),
@@ -20,7 +21,7 @@ type SpeechRec = {
   start: () => void;
   stop: () => void;
   abort: () => void;
-  onresult: ((event: { results: ArrayLike<ArrayLike<{ transcript: string }> & { isFinal?: boolean }> & { length: number } }) => void) | null;
+  onresult: ((event: { resultIndex: number; results: ArrayLike<ArrayLike<{ transcript: string }> & { isFinal?: boolean }> & { length: number } }) => void) | null;
   onerror: ((event: { error: string }) => void) | null;
   onend: (() => void) | null;
 };
@@ -32,6 +33,31 @@ function getRecognitionCtor(): SpeechCtor | null {
   return w.SpeechRecognition ?? w.webkitSpeechRecognition ?? null;
 }
 
+function speak(text: string, lang = "fr-FR") {
+  if (typeof window === "undefined" || !("speechSynthesis" in window) || !text) return;
+  try {
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = lang;
+    u.rate = 1;
+    u.pitch = 1;
+    window.speechSynthesis.speak(u);
+  } catch {
+    /* noop */
+  }
+}
+
+function greetingFor(name: string) {
+  const h = new Date().getHours();
+  const greet = h < 5 ? "Bonne nuit" : h < 12 ? "Bonjour" : h < 18 ? "Bon après-midi" : "Bonsoir";
+  const seen = typeof window !== "undefined" ? sessionStorage.getItem("voiceGreeted") : "1";
+  if (!seen) {
+    if (typeof window !== "undefined") sessionStorage.setItem("voiceGreeted", "1");
+    return `${greet} ${name}. Dis-moi ce que tu as vendu ou acheté.`;
+  }
+  return `${greet} ${name}. Je t'écoute.`;
+}
+
 function VoicePage() {
   const navigate = useNavigate();
   const parse = useServerFn(parseVoiceOperation);
@@ -41,10 +67,20 @@ function VoicePage() {
   const [analyzing, setAnalyzing] = useState(false);
   const [result, setResult] = useState<VoiceParsedOperation | null>(null);
   const [supported, setSupported] = useState<boolean | null>(null);
+  const [userName, setUserName] = useState("Maestra");
   const recRef = useRef<SpeechRec | null>(null);
+  const committedCountRef = useRef(0);
 
   useEffect(() => {
     setSupported(!!getRecognitionCtor());
+    supabase.auth.getUser().then(({ data }) => {
+      const meta = (data.user?.user_metadata ?? {}) as { name?: string; full_name?: string };
+      const name = meta.name || meta.full_name || "Maestra";
+      setUserName(name);
+      const msg = greetingFor(name);
+      // Délai pour laisser l'autorisation audio se faire au premier clic
+      setTimeout(() => speak(msg), 600);
+    });
     return () => recRef.current?.abort();
   }, []);
 
@@ -54,22 +90,31 @@ function VoicePage() {
     setResult(null);
     setTranscript("");
     setInterim("");
+    committedCountRef.current = 0;
     const rec = new Ctor();
     rec.lang = "fr-FR";
     rec.continuous = true;
     rec.interimResults = true;
     rec.maxAlternatives = 1;
     rec.onresult = (e) => {
-      let finalText = "";
+      // Ne traiter QUE les nouveaux résultats (resultIndex) pour éviter la duplication
+      const start = Math.max(e.resultIndex, committedCountRef.current);
+      let newFinal = "";
       let interimText = "";
-      for (let i = 0; i < e.results.length; i++) {
+      for (let i = start; i < e.results.length; i++) {
         const res = e.results[i] as ArrayLike<{ transcript: string }> & { isFinal?: boolean };
-        const txt = res[0]?.transcript ?? "";
-        if ((res as { isFinal?: boolean }).isFinal) finalText += txt + " ";
-        else interimText += txt;
+        const txt = (res[0]?.transcript ?? "").trim();
+        if (res.isFinal) {
+          newFinal += " " + txt;
+          committedCountRef.current = i + 1;
+        } else {
+          interimText += " " + txt;
+        }
       }
-      if (finalText) setTranscript((prev) => (prev + " " + finalText).trim());
-      setInterim(interimText);
+      if (newFinal.trim()) {
+        setTranscript((prev) => dedupeWords((prev + " " + newFinal).trim()));
+      }
+      setInterim(interimText.trim());
     };
     rec.onerror = (e) => {
       if (e.error !== "no-speech" && e.error !== "aborted") toast.error(`Micro : ${e.error}`);
@@ -86,12 +131,22 @@ function VoicePage() {
   }
 
   async function analyze() {
-    const text = (transcript + " " + interim).trim();
+    const text = dedupeWords((transcript + " " + interim).trim());
     if (!text) return toast.error("Parle d'abord, puis appuie sur Analyser.");
     setAnalyzing(true);
     try {
       const res = await parse({ data: { transcript: text } });
       setResult(res);
+      const lang = res.lang === "en" ? "en-US" : res.lang === "es" ? "es-ES" : "fr-FR";
+      if (res.confidence === "faible" && res.raison) {
+        speak(res.raison, lang);
+      } else {
+        const recap =
+          res.type === "entree"
+            ? `Vente de ${res.description} pour ${res.montant} francs. Confirme ?`
+            : `Achat de ${res.description} pour ${res.montant} francs. Confirme ?`;
+        speak(recap, lang);
+      }
     } catch (e) {
       toast.error((e as Error).message || "Analyse impossible.");
     } finally {
@@ -127,7 +182,7 @@ function VoicePage() {
         </div>
         <div>
           <h1 className="font-display text-2xl font-bold text-primary leading-tight">Saisie vocale</h1>
-          <p className="text-xs text-muted-foreground">Parle simplement. L'IA comprend et remplit pour toi.</p>
+          <p className="text-xs text-muted-foreground">Bonjour {userName}. Parle, l'IA comprend FR · Baoulé · EN · ES.</p>
         </div>
       </header>
 
