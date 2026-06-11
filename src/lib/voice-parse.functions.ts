@@ -16,10 +16,23 @@ export type VoiceParsedOperation = {
   note: string | null;
   confidence: "haute" | "moyenne" | "faible";
   raison: string;
+  lang: "fr" | "en" | "es" | "bci";
+  price_source: "ia" | "historique" | "manuel";
 };
 
-const CATEGORIES = ["Boissons", "Alimentation", "Carburant", "Divers", "Autre"];
-const PAIEMENTS = ["Espèces", "Wave", "MTN Money", "Orange Money", "Moov Money"];
+const CATEGORIES = [
+  "Boissons",
+  "Restauration",
+  "Viandes",
+  "Poissons",
+  "Legumes",
+  "Condiments",
+  "Alimentation",
+  "Carburant",
+  "Divers",
+  "Autre",
+];
+const PAIEMENTS = ["Especes", "Wave", "MTN Money", "Orange Money", "Moov Money"];
 
 const FR_NUMBERS: Record<string, number> = {
   zero: 0, un: 1, une: 1, deux: 2, trois: 3, quatre: 4, cinq: 5, six: 6,
@@ -31,9 +44,7 @@ const FR_NUMBERS: Record<string, number> = {
 
 function normalizeNumbers(text: string): string {
   let t = " " + text.toLowerCase() + " ";
-  // "k" / "mille" suffix patterns: "5k", "5 k", "5 mille"
   t = t.replace(/(\d+)\s*(k|mille|milles)\b/gi, (_, n) => String(Number(n) * 1000));
-  // single word → digit (basic, helps the AI even if not perfect)
   for (const [word, num] of Object.entries(FR_NUMBERS)) {
     const re = new RegExp(`\\b${word}\\b`, "gi");
     t = t.replace(re, String(num));
@@ -51,24 +62,36 @@ function toMontant(value: unknown): number {
   return Number.isFinite(n) ? n : 0;
 }
 
-const SYSTEM_PROMPT = `Tu es un assistant intelligent qui transforme une phrase en français (parfois mal prononcée, avec fautes, accents africains, expressions populaires de Côte d'Ivoire) en UNE opération financière pour une cave/petite boutique.
+function dedupeDescription(text: string): string {
+  const tokens = text.split(/\s+/).filter(Boolean);
+  const out: string[] = [];
+  for (const tok of tokens) {
+    if (out.length && out[out.length - 1].toLowerCase() === tok.toLowerCase()) continue;
+    out.push(tok);
+  }
+  return out.join(" ");
+}
 
-Règles :
-- Détecte si c'est une ENTRÉE d'argent (vente, vendu, payé, reçu, encaissé, "il a payé", "j'ai vendu") ou une SORTIE (achat, acheter, "j'ai pris", dépense, payer fournisseur, carburant).
-- Calcule le montant total en FCFA : si la phrase dit "2 casiers à 5000" → 10000. Si "casier de 66 à 6500" → 6500. Si seul un nombre est cité (ex "j'ai vendu pour 10000"), c'est le montant total.
-- Si le montant n'est vraiment pas devinable, mets montant = 0 et confidence = "faible" — n'invente jamais.
-- Description courte (3-8 mots) qui résume l'article et la quantité.
-- Catégorie parmi : ${CATEGORIES.join(", ")}. Devine au mieux.
-- Mode de paiement parmi : ${PAIEMENTS.join(", ")}. Par défaut "Espèces" si non mentionné.
-- Confidence "haute" si tout est clair, "moyenne" si tu as deviné, "faible" si la phrase est ambiguë.
-- Réponds UNIQUEMENT en JSON strict : {"type":"entree|sortie","montant":number,"description":"...","categorie":"...","mode_paiement":"...","note":null|"...","confidence":"haute|moyenne|faible","raison":"explication courte"}.`;
+const SYSTEM_PROMPT = [
+  "Tu transformes une phrase parlee (francais, anglais, espagnol ou baoule de Cote d'Ivoire) en UNE operation financiere pour un commerce (cave, maquis, restaurant, bistro, boutique).",
+  "",
+  "Regles:",
+  "- Detecte la LANGUE: fr | en | es | bci (baoule). Pour le baoule, traduis mentalement en francais (ex: 'n yoli atɔlɛ'='j'ai vendu', 'n toli'='j'ai achete', 'akpɔ'='casier').",
+  "- ENTREE: vente, vendu, paye, recu, encaisse, sold, vendi. SORTIE: achat, achete, pris, depense, fournisseur, carburant, bought, compre.",
+  "- Calcule le montant total en FCFA. '2 casiers a 5000'=10000. 'casier de 66 a 6500'=6500. Si pas de prix mais un produit nomme: montant=0 (le serveur cherchera dans l'historique).",
+  "- Description COURTE (3-8 mots) en FRANCAIS. Nettoie les repetitions ('deux deux bouteilles'='2 bouteilles').",
+  "- Categorie parmi: Boissons (biere, vin, sucrerie, jus), Restauration (foutou, attieke, riz, plat), Viandes (boeuf, mouton, cabri, porc, poulet), Poissons, Legumes, Condiments (huile, tomate, oignon, magie, sel), Alimentation, Carburant, Divers, Autre.",
+  "- Paiement parmi: Especes, Wave, MTN Money, Orange Money, Moov Money. Defaut: Especes.",
+  "- Confidence: 'haute' si tout est clair, 'moyenne' si prix manque ou devine, 'faible' si phrase ambigue.",
+  "- Reponds UNIQUEMENT en JSON: {\"type\":\"entree|sortie\",\"montant\":number,\"description\":\"...\",\"categorie\":\"...\",\"mode_paiement\":\"...\",\"note\":null,\"confidence\":\"haute|moyenne|faible\",\"raison\":\"explication courte en francais\",\"lang\":\"fr|en|es|bci\"}.",
+].join("\n");
 
 export const parseVoiceOperation = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => inputSchema.parse(input))
-  .handler(async ({ data }): Promise<VoiceParsedOperation> => {
+  .handler(async ({ data, context }): Promise<VoiceParsedOperation> => {
     const key = process.env.LOVABLE_API_KEY;
-    if (!key) throw new Error("Service vocal indisponible (clé IA manquante).");
+    if (!key) throw new Error("Service vocal indisponible (cle IA manquante).");
 
     const normalized = normalizeNumbers(data.transcript);
 
@@ -83,13 +106,13 @@ export const parseVoiceOperation = createServerFn({ method: "POST" })
         response_format: { type: "json_object" },
         messages: [
           { role: "system", content: SYSTEM_PROMPT },
-          { role: "user", content: `Phrase originale : "${data.transcript}"\nPhrase normalisée : "${normalized}"` },
+          { role: "user", content: `Phrase originale: "${data.transcript}"\nPhrase normalisee: "${normalized}"` },
         ],
       }),
     });
 
-    if (response.status === 429) throw new Error("Trop de requêtes vocales. Réessaie dans un instant.");
-    if (response.status === 402) throw new Error("Crédits IA épuisés. Recharge le projet.");
+    if (response.status === 429) throw new Error("Trop de requetes vocales. Reessaie dans un instant.");
+    if (response.status === 402) throw new Error("Credits IA epuises. Recharge le projet.");
     if (!response.ok) throw new Error("L'IA n'a pas pu analyser la phrase.");
 
     const json = await response.json();
@@ -98,36 +121,100 @@ export const parseVoiceOperation = createServerFn({ method: "POST" })
     try {
       parsed = JSON.parse(typeof raw === "string" ? raw : JSON.stringify(raw));
     } catch {
-      throw new Error("Réponse IA illisible. Reformule la phrase.");
+      throw new Error("Reponse IA illisible. Reformule la phrase.");
     }
 
     const type = parsed.type === "sortie" ? "sortie" : "entree";
     let montant = toMontant(parsed.montant);
     if (!montant) {
-      // Fallback: prends le plus grand nombre trouvé dans la phrase normalisée
       const nums = normalized.match(/\d+(?:[.,]\d+)?/g)?.map(Number).filter((n) => n > 0) ?? [];
       if (nums.length) montant = Math.max(...nums);
     }
-    const description = typeof parsed.description === "string" ? parsed.description.trim() : "";
-    const safeDescription = description.length >= 2 ? description : data.transcript.slice(0, 60);
+    const rawDesc = typeof parsed.description === "string" ? parsed.description.trim() : "";
+    const description = dedupeDescription(rawDesc.length >= 2 ? rawDesc : data.transcript.slice(0, 80));
 
     const categorie = CATEGORIES.includes(parsed.categorie as string) ? (parsed.categorie as string) : "Divers";
-    const mode = PAIEMENTS.includes(parsed.mode_paiement as string) ? (parsed.mode_paiement as string) : "Espèces";
+    const mode = PAIEMENTS.includes(parsed.mode_paiement as string) ? (parsed.mode_paiement as string) : "Especes";
     let confidence = ["haute", "moyenne", "faible"].includes(parsed.confidence as string)
       ? (parsed.confidence as "haute" | "moyenne" | "faible")
       : "moyenne";
+    const lang = (["fr", "en", "es", "bci"].includes(parsed.lang as string) ? parsed.lang : "fr") as
+      | "fr" | "en" | "es" | "bci";
+
+    let price_source: "ia" | "historique" | "manuel" = montant ? "ia" : "manuel";
+    if (!montant && description.length >= 3) {
+      const found = await findHistoricalPrice(context as unknown as AuthCtx, description);
+      if (found) {
+        montant = found;
+        price_source = "historique";
+        if (confidence === "faible") confidence = "moyenne";
+      }
+    }
+
     if (!montant || description.length < 2) confidence = "faible";
+
+    const baseRaison = typeof parsed.raison === "string" ? parsed.raison : "";
+    const raison =
+      baseRaison +
+      (price_source === "historique" ? " Prix repris de l'historique." : "") +
+      (montant === 0 ? " Precise le montant sur le formulaire." : "");
 
     return {
       type,
       montant: Math.round(montant),
-      description: safeDescription,
+      description,
       categorie,
       mode_paiement: mode,
       note: typeof parsed.note === "string" && parsed.note.trim() ? parsed.note.trim() : null,
       confidence,
-      raison: typeof parsed.raison === "string"
-        ? parsed.raison + (montant === 0 ? " · Précise le montant sur le formulaire." : "")
-        : (montant === 0 ? "Montant à compléter manuellement." : ""),
+      raison: raison.trim(),
+      lang,
+      price_source,
     };
   });
+
+type SbQuery = {
+  select: (cols: string) => SbQuery;
+  eq: (col: string, val: string) => SbQuery;
+  ilike: (col: string, pattern: string) => SbQuery;
+  order: (col: string, opts: { ascending: boolean }) => SbQuery;
+  limit: (n: number) => Promise<{ data: Array<{ montant: number }> | null }>;
+};
+type AuthCtx = {
+  supabase: { from: (table: string) => SbQuery };
+  userId: string;
+};
+
+async function findHistoricalPrice(context: AuthCtx, description: string): Promise<number | null> {
+  const tokens = description
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}\s]/gu, " ")
+    .split(/\s+/)
+    .filter((t) => t.length >= 3 && !/^\d+$/.test(t))
+    .slice(0, 3);
+  if (tokens.length === 0) return null;
+
+  const pattern = `%${tokens.join("%")}%`;
+  const { data: rows } = await context.supabase
+    .from("operations")
+    .select("montant")
+    .eq("user_id", context.userId)
+    .ilike("description", pattern)
+    .order("date_operation", { ascending: false })
+    .limit(10);
+
+  const filtered = (rows ?? []).filter((r) => r.montant && Number(r.montant) > 0);
+  if (filtered.length > 0) return Number(filtered[0].montant);
+
+  // Fallback: premier mot seul
+  const single = `%${tokens[0]}%`;
+  const { data: rows2 } = await context.supabase
+    .from("operations")
+    .select("montant")
+    .eq("user_id", context.userId)
+    .ilike("description", single)
+    .order("date_operation", { ascending: false })
+    .limit(5);
+  const filtered2 = (rows2 ?? []).filter((r) => r.montant && Number(r.montant) > 0);
+  return filtered2.length ? Number(filtered2[0].montant) : null;
+}

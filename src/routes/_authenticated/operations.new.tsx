@@ -19,8 +19,19 @@ export const Route = createFileRoute("/_authenticated/operations/new")({
   component: NewOperation,
 });
 
-const CATEGORIES = ["Boissons", "Alimentation", "Carburant", "Divers", "Autre"];
-const PAIEMENTS = ["Espèces", "Wave", "MTN Money", "Orange Money", "Moov Money"];
+const CATEGORIES = [
+  "Boissons",
+  "Restauration",
+  "Viandes",
+  "Poissons",
+  "Legumes",
+  "Condiments",
+  "Alimentation",
+  "Carburant",
+  "Divers",
+  "Autre",
+];
+const PAIEMENTS = ["Espèces", "Especes", "Wave", "MTN Money", "Orange Money", "Moov Money"];
 
 function NewOperation() {
   const navigate = useNavigate();

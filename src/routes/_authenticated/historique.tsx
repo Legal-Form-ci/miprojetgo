@@ -3,8 +3,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { exportHistoryCsv } from "@/lib/export.functions";
-import { ArrowDownCircle, ArrowUpCircle, Trash2, Search, Download } from "lucide-react";
+import { exportHistoryCsv, exportHistoryReport } from "@/lib/export.functions";
+import { ArrowDownCircle, ArrowUpCircle, Trash2, Search, Download, FileText } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/historique")({
@@ -55,11 +55,13 @@ function fmt(n: number) {
 function History() {
   const qc = useQueryClient();
   const exportHistory = useServerFn(exportHistoryCsv);
+  const exportReport = useServerFn(exportHistoryReport);
   const [periode, setPeriode] = useState<Periode>("mois");
   const [typeFilter, setTypeFilter] = useState<"all" | "entree" | "sortie">("all");
   const [q, setQ] = useState("");
   const [isAdmin, setIsAdmin] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [reporting, setReporting] = useState(false);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: u }) => {
@@ -133,6 +135,27 @@ function History() {
     }
   }
 
+  async function handleReport() {
+    setReporting(true);
+    try {
+      const start = startOf(periode);
+      const res = await exportReport({
+        data: { startIso: start ? start.toISOString() : null, typeFilter, query: q.trim() },
+      });
+      if (res.count === 0) return toast.error("Rien à exporter");
+      const w = window.open("", "_blank");
+      if (!w) return toast.error("Autorise les pop-ups pour ouvrir le rapport");
+      w.document.open();
+      w.document.write(res.html);
+      w.document.close();
+      toast.success(`Rapport généré (${res.count} opérations)`);
+    } catch (error) {
+      toast.error((error as Error).message || "Rapport refusé");
+    } finally {
+      setReporting(false);
+    }
+  }
+
   return (
     <div className="space-y-4">
       <header className="flex items-start justify-between gap-3">
@@ -141,13 +164,23 @@ function History() {
           <p className="text-sm text-muted-foreground">Filtre, recherche, supprime.</p>
         </div>
         {isAdmin && (
-          <button
-            onClick={handleExport}
-            disabled={exporting}
-            className="inline-flex items-center gap-1.5 h-9 px-3 rounded-xl bg-primary text-primary-foreground text-xs font-semibold"
-          >
-            <Download className="w-4 h-4" /> {exporting ? "Export…" : "Export CSV"}
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={handleReport}
+              disabled={reporting}
+              className="inline-flex items-center gap-1.5 h-9 px-3 rounded-xl text-primary-foreground text-xs font-semibold"
+              style={{ background: "var(--gradient-primary)" }}
+            >
+              <FileText className="w-4 h-4" /> {reporting ? "Rapport…" : "Rapport PDF"}
+            </button>
+            <button
+              onClick={handleExport}
+              disabled={exporting}
+              className="inline-flex items-center gap-1.5 h-9 px-3 rounded-xl bg-card border border-border text-foreground text-xs font-semibold"
+            >
+              <Download className="w-4 h-4" /> {exporting ? "CSV…" : "CSV"}
+            </button>
+          </div>
         )}
       </header>
 
