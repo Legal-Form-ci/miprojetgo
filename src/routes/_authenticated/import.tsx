@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState, type ChangeEvent } from "react";
-import { Camera, CheckCircle2, AlertTriangle, Loader2, Save, XCircle } from "lucide-react";
+import { Camera, CheckCircle2, AlertTriangle, Loader2, Save, XCircle, Upload } from "lucide-react";
 import { toast } from "sonner";
 
 import { analyzeImportLines } from "@/lib/import-ai.functions";
@@ -26,6 +26,8 @@ function ImportPage() {
   const [imageDataUrl, setImageDataUrl] = useState<string | undefined>();
   const [text, setText] = useState("");
   const [lines, setLines] = useState<ValidLine[]>([]);
+  const cameraRef = useRef<HTMLInputElement>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   const accepted = useMemo(() => lines.filter((line) => line.ok && line.operation), [lines]);
   const rejected = lines.filter((line) => !line.ok);
@@ -79,6 +81,7 @@ function ImportPage() {
     const reader = new FileReader();
     reader.onload = () => setImageDataUrl(String(reader.result));
     reader.readAsDataURL(file);
+    e.target.value = "";
   }
 
   return (
@@ -91,10 +94,27 @@ function ImportPage() {
       </header>
 
       <section className="bg-card border border-border rounded-2xl p-4 space-y-3" style={{ boxShadow: "var(--shadow-card)" }}>
-        <label className="block space-y-1.5">
+        <div className="space-y-1.5">
           <span className="text-xs font-semibold uppercase tracking-wide text-foreground/80">Photo du cahier/reçu</span>
-          <input type="file" accept="image/*" capture="environment" onChange={onFile} className="w-full text-sm" />
-        </label>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => cameraRef.current?.click()}
+              className="h-11 rounded-xl border border-border bg-background flex items-center justify-center gap-2 text-sm font-semibold"
+            >
+              <Camera className="w-4 h-4" /> Prendre une photo
+            </button>
+            <button
+              type="button"
+              onClick={() => fileRef.current?.click()}
+              className="h-11 rounded-xl border border-border bg-background flex items-center justify-center gap-2 text-sm font-semibold"
+            >
+              <Upload className="w-4 h-4" /> Choisir un fichier
+            </button>
+          </div>
+          <input ref={cameraRef} type="file" accept="image/*" capture="environment" onChange={onFile} className="hidden" />
+          <input ref={fileRef} type="file" accept="image/*" onChange={onFile} className="hidden" />
+        </div>
         {imageDataUrl && <img src={imageDataUrl} alt="Aperçu import" className="w-full max-h-52 object-contain rounded-xl bg-muted" />}
         <label className="block space-y-1.5">
           <span className="text-xs font-semibold uppercase tracking-wide text-foreground/80">Texte manuel (secours)</span>
