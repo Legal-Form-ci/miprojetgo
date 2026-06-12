@@ -58,7 +58,7 @@ function AuthedLayout() {
     { to: "/operations", label: "Saisir", icon: PlusCircle, primary: true },
     { to: "/import", label: "Import", icon: Camera },
     { to: "/historique", label: "Historique", icon: History },
-    { to: "/profil", label: "Profil", icon: UserIcon },
+    { to: "/synchronisation", label: "Sync", icon: ListChecks },
     { to: "/utilisateurs", label: "Users", icon: Users, adminOnly: true },
   ];
   const visibleTabs = tabs.filter((t) => !t.adminOnly || isAdmin);
@@ -73,16 +73,24 @@ function AuthedLayout() {
               MaestraBook
             </span>
           </Link>
-          <button
-            onClick={signOut}
-            className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-primary transition-colors"
-            aria-label="Déconnexion"
-          >
-            <span className="hidden sm:inline">
-              {profile?.full_name || profile?.phone || "Compte"}
-            </span>
-            <LogOut className="w-4 h-4" />
-          </button>
+          <div className="flex items-center gap-2">
+            <Link
+              to="/profil"
+              className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-primary transition-colors"
+            >
+              <UserIcon className="w-4 h-4" />
+              <span className="hidden sm:inline truncate max-w-[120px]">
+                {profile?.full_name || profile?.phone || "Profil"}
+              </span>
+            </Link>
+            <button
+              onClick={signOut}
+              className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-destructive transition-colors"
+              aria-label="Déconnexion"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
+          </div>
         </div>
       </header>
 
