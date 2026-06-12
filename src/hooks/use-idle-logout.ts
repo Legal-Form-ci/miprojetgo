@@ -30,7 +30,6 @@ export function useIdleLogout(enabled: boolean) {
       "touchstart",
       "click",
       "scroll",
-      "visibilitychange",
     ];
     events.forEach((e) => window.addEventListener(e, reset, { passive: true }));
     reset();
