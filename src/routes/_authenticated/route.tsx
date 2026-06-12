@@ -1,9 +1,10 @@
 import { createFileRoute, Outlet, redirect, Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
-import { LayoutDashboard, PlusCircle, History, LogOut, Users, Camera, ListChecks, Mic } from "lucide-react";
+import { LayoutDashboard, PlusCircle, History, LogOut, Users, Camera, ListChecks, Mic, User as UserIcon } from "lucide-react";
 import logo from "@/assets/maestrabook-logo.png.asset.json";
 import { SyncBanner } from "@/components/sync-banner";
+import { useIdleLogout } from "@/hooks/use-idle-logout";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -21,6 +22,8 @@ function AuthedLayout() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [profile, setProfile] = useState<{ full_name: string | null; phone: string } | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+
+  useIdleLogout(true);
 
   useEffect(() => {
     supabase
@@ -44,7 +47,7 @@ function AuthedLayout() {
   }
 
   const tabs: Array<{
-    to: "/dashboard" | "/operations" | "/historique" | "/import" | "/synchronisation" | "/utilisateurs" | "/voix";
+    to: "/dashboard" | "/operations" | "/historique" | "/import" | "/synchronisation" | "/utilisateurs" | "/voix" | "/profil";
     label: string;
     icon: typeof LayoutDashboard;
     primary?: boolean;
@@ -55,7 +58,7 @@ function AuthedLayout() {
     { to: "/operations", label: "Saisir", icon: PlusCircle, primary: true },
     { to: "/import", label: "Import", icon: Camera },
     { to: "/historique", label: "Historique", icon: History },
-    { to: "/synchronisation", label: "Sync", icon: ListChecks },
+    { to: "/profil", label: "Profil", icon: UserIcon },
     { to: "/utilisateurs", label: "Users", icon: Users, adminOnly: true },
   ];
   const visibleTabs = tabs.filter((t) => !t.adminOnly || isAdmin);
