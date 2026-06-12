@@ -1,8 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowDownCircle, ArrowUpCircle, Wallet, Sparkles, Mic } from "lucide-react";
-import logo from "@/assets/maestrabook-logo.png.asset.json";
+import { ArrowDownCircle, ArrowUpCircle, Mic } from "lucide-react";
+import { BalanceCard } from "@/components/balance-card";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({ meta: [{ title: "Tableau de bord — MaestraBook" }] }),
@@ -24,14 +24,48 @@ function fmt(n: number) {
 }
 
 function Dashboard() {
-  const { data, isLoading } = useQuery({
-    queryKey: ["dashboard-ops"],
+  const { data: meta } = useQuery({
+    queryKey: ["dashboard-profile"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data: u } = await supabase.auth.getUser();
+      const uid = u.user?.id;
+      if (!uid) return { uid: null, isAdmin: false, profile: null };
+      const [{ data: roleRow }, { data: prof }] = await Promise.all([
+        supabase.from("user_roles").select("role").eq("user_id", uid).eq("role", "admin").maybeSingle(),
+        supabase
+          .from("profiles")
+          .select("full_name, first_name, last_name, phone, avatar_url")
+          .eq("id", uid)
+          .maybeSingle(),
+      ]);
+      return {
+        uid,
+        isAdmin: !!roleRow,
+        profile: prof as {
+          full_name: string | null;
+          first_name: string | null;
+          last_name: string | null;
+          phone: string;
+          avatar_url: string | null;
+        } | null,
+      };
+    },
+  });
+
+  const isAdmin = meta?.isAdmin ?? false;
+  const uid = meta?.uid ?? null;
+
+  const { data } = useQuery({
+    queryKey: ["dashboard-ops", uid, isAdmin],
+    enabled: !!uid,
+    queryFn: async () => {
+      let q = supabase
         .from("operations")
         .select("id, type, montant, description, categorie, mode_paiement, date_operation")
         .order("date_operation", { ascending: false })
-        .limit(200);
+        .limit(500);
+      if (!isAdmin && uid) q = q.eq("user_id", uid);
+      const { data, error } = await q;
       if (error) throw error;
       return (data ?? []) as Op[];
     },
@@ -42,15 +76,7 @@ function Dashboard() {
   const ops = data ?? [];
   const todayStart = new Date();
   todayStart.setHours(0, 0, 0, 0);
-
-  const totEntree = ops.filter((o) => o.type === "entree").reduce((s, o) => s + Number(o.montant), 0);
-  const totSortie = ops.filter((o) => o.type === "sortie").reduce((s, o) => s + Number(o.montant), 0);
-  const solde = totEntree - totSortie;
-
   const todayOps = ops.filter((o) => new Date(o.date_operation) >= todayStart);
-  const entreeJour = todayOps.filter((o) => o.type === "entree").reduce((s, o) => s + Number(o.montant), 0);
-  const sortieJour = todayOps.filter((o) => o.type === "sortie").reduce((s, o) => s + Number(o.montant), 0);
-
   const last5 = ops.slice(0, 5);
 
   const paiementStats = todayOps.reduce<Record<string, number>>((acc, o) => {
@@ -61,58 +87,26 @@ function Dashboard() {
 
   return (
     <div className="space-y-6">
-      <section className="flex items-center gap-4 pt-1">
-        <div className="relative shrink-0">
-          <div
-            aria-hidden
-            className="absolute inset-0 rounded-2xl blur-xl opacity-50"
-            style={{ background: "var(--gradient-gold)" }}
-          />
-          <img
-            src={logo.url}
-            alt="MaestraBook"
-            className="relative w-20 h-20 object-contain drop-shadow-md"
-          />
-        </div>
-        <div className="min-w-0">
-          <h1 className="font-display text-2xl font-bold text-primary leading-tight">
-            Bonjour Maestra
-          </h1>
-          <p className="text-xs text-muted-foreground italic mt-0.5">
-            Tes comptes. Ton contrôle.
-          </p>
-        </div>
-      </section>
+      <header className="min-w-0">
+        <h1 className="font-display text-xl sm:text-2xl font-bold text-primary leading-tight truncate">
+          Bonjour {meta?.profile?.first_name || "Maestra"}
+        </h1>
+        <p className="text-xs text-muted-foreground italic mt-0.5">
+          {isAdmin ? "Vue globale de toutes les opérations." : "Tes comptes. Ton contrôle."}
+        </p>
+      </header>
 
-      <section
-        className="rounded-3xl p-6 text-primary-foreground relative overflow-hidden"
-        style={{ background: "var(--gradient-hero)", boxShadow: "var(--shadow-elegant)" }}
-      >
-        <div className="flex items-center gap-2 text-xs uppercase tracking-widest opacity-80">
-          <Wallet className="w-4 h-4" /> Solde actuel
-        </div>
-        <div className="font-display text-4xl font-bold mt-2">
-          {isLoading ? "—" : fmt(solde)}
-        </div>
-        <div className="grid grid-cols-2 gap-3 mt-5">
-          <div className="rounded-2xl bg-white/10 backdrop-blur p-3">
-            <div className="text-[10px] uppercase tracking-wide opacity-75 flex items-center gap-1">
-              <ArrowUpCircle className="w-3.5 h-3.5" /> Entrées (jour)
-            </div>
-            <div className="font-semibold text-lg mt-1">{fmt(entreeJour)}</div>
-          </div>
-          <div className="rounded-2xl bg-white/10 backdrop-blur p-3">
-            <div className="text-[10px] uppercase tracking-wide opacity-75 flex items-center gap-1">
-              <ArrowDownCircle className="w-3.5 h-3.5" /> Sorties (jour)
-            </div>
-            <div className="font-semibold text-lg mt-1">{fmt(sortieJour)}</div>
-          </div>
-        </div>
-        <Sparkles
-          className="absolute -right-4 -top-4 w-28 h-28 opacity-10"
-          style={{ color: "var(--gold)" }}
-        />
-      </section>
+      <BalanceCard
+        ops={ops}
+        isAdmin={isAdmin}
+        fullName={
+          meta?.profile?.full_name ||
+          [meta?.profile?.first_name, meta?.profile?.last_name].filter(Boolean).join(" ") ||
+          null
+        }
+        phone={meta?.profile?.phone ?? null}
+        avatarPath={meta?.profile?.avatar_url ?? null}
+      />
 
       <section className="grid grid-cols-2 gap-3">
         <Link

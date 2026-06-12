@@ -1,9 +1,10 @@
 import { createFileRoute, Outlet, redirect, Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
-import { LayoutDashboard, PlusCircle, History, LogOut, Users, Camera, ListChecks, Mic } from "lucide-react";
+import { LayoutDashboard, PlusCircle, History, LogOut, Users, Camera, ListChecks, Mic, User as UserIcon } from "lucide-react";
 import logo from "@/assets/maestrabook-logo.png.asset.json";
 import { SyncBanner } from "@/components/sync-banner";
+import { useIdleLogout } from "@/hooks/use-idle-logout";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -21,6 +22,8 @@ function AuthedLayout() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [profile, setProfile] = useState<{ full_name: string | null; phone: string } | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+
+  useIdleLogout(true);
 
   useEffect(() => {
     supabase
@@ -44,7 +47,7 @@ function AuthedLayout() {
   }
 
   const tabs: Array<{
-    to: "/dashboard" | "/operations" | "/historique" | "/import" | "/synchronisation" | "/utilisateurs" | "/voix";
+    to: "/dashboard" | "/operations" | "/historique" | "/import" | "/synchronisation" | "/utilisateurs" | "/voix" | "/profil";
     label: string;
     icon: typeof LayoutDashboard;
     primary?: boolean;
@@ -70,16 +73,24 @@ function AuthedLayout() {
               MaestraBook
             </span>
           </Link>
-          <button
-            onClick={signOut}
-            className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-primary transition-colors"
-            aria-label="Déconnexion"
-          >
-            <span className="hidden sm:inline">
-              {profile?.full_name || profile?.phone || "Compte"}
-            </span>
-            <LogOut className="w-4 h-4" />
-          </button>
+          <div className="flex items-center gap-2">
+            <Link
+              to="/profil"
+              className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-primary transition-colors"
+            >
+              <UserIcon className="w-4 h-4" />
+              <span className="hidden sm:inline truncate max-w-[120px]">
+                {profile?.full_name || profile?.phone || "Profil"}
+              </span>
+            </Link>
+            <button
+              onClick={signOut}
+              className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-destructive transition-colors"
+              aria-label="Déconnexion"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
+          </div>
         </div>
       </header>
 
