@@ -247,6 +247,12 @@ export const exportHistoryReport = createServerFn({ method: "POST" })
   td .t{color:#888;font-size:10px}
   .num{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
   .g{color:#15803d}.r{color:#b91c1c}
+  .total-global{margin-top:40px;padding:24px;border-radius:12px;background:linear-gradient(135deg,#6b1e3a,#8b2647);color:#fff;page-break-inside:avoid}
+  .total-global h2{margin:0 0 16px;font-size:18px;color:#fff}
+  .total-global .tg{color:#fff}
+  .total-global .tg td{border-bottom:1px solid rgba(255,255,255,.15);padding:10px 6px;font-size:14px}
+  .total-global .tg tr.bal td{font-size:18px;font-weight:700;border-bottom:none;padding-top:14px}
+  .total-global .tg .g{color:#86efac}.total-global .tg .r{color:#fca5a5}
   .pill{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;text-transform:uppercase}
   .pill.in{background:#dcfce7;color:#15803d}
   .pill.out{background:#fee2e2;color:#b91c1c}
