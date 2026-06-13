@@ -119,6 +119,42 @@ export type Database = {
         }
         Relationships: []
       }
+      produits: {
+        Row: {
+          actif: boolean
+          categorie: string
+          created_at: string
+          id: string
+          nom: string
+          prix_unitaire: number
+          unite: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          actif?: boolean
+          categorie?: string
+          created_at?: string
+          id?: string
+          nom: string
+          prix_unitaire?: number
+          unite?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          actif?: boolean
+          categorie?: string
+          created_at?: string
+          id?: string
+          nom?: string
+          prix_unitaire?: number
+          unite?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -191,6 +227,8 @@ export type Database = {
         }
         Returns: boolean
       }
+      show_limit: { Args: never; Returns: number }
+      show_trgm: { Args: { "": string }; Returns: string[] }
     }
     Enums: {
       app_role: "admin" | "vendeur"

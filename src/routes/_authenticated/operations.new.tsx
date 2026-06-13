@@ -1,9 +1,9 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ArrowDownCircle, ArrowUpCircle, Loader2, ArrowLeft } from "lucide-react";
+import { ArrowDownCircle, ArrowUpCircle, Loader2, ArrowLeft, Package } from "lucide-react";
 import { enqueueOperation } from "@/lib/offline-queue";
 
 export const Route = createFileRoute("/_authenticated/operations/new")({
@@ -40,6 +40,10 @@ function NewOperation() {
   const { type } = search;
   const isIn = type === "entree";
   const [montant, setMontant] = useState(search.montant ?? "");
+  const [quantite, setQuantite] = useState<string>("1");
+  const [prixUnit, setPrixUnit] = useState<string>("");
+  const [produitQuery, setProduitQuery] = useState("");
+  const [showSuggest, setShowSuggest] = useState(false);
   const [description, setDescription] = useState(search.description ?? "");
   const [categorie, setCategorie] = useState(
     search.categorie && CATEGORIES.includes(search.categorie) ? search.categorie : CATEGORIES[0],
@@ -53,6 +57,40 @@ function NewOperation() {
     d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
     return d.toISOString().slice(0, 16);
   });
+
+  const { data: produits = [] } = useQuery({
+    queryKey: ["produits-pick"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("produits")
+        .select("id, nom, prix_unitaire, categorie")
+        .eq("actif", true)
+        .order("nom")
+        .limit(200);
+      return (data ?? []) as Array<{ id: string; nom: string; prix_unitaire: number; categorie: string }>;
+    },
+  });
+
+  const suggestions = useMemo(() => {
+    const q = produitQuery.trim().toLowerCase();
+    if (!q) return produits.slice(0, 8);
+    return produits.filter((p) => p.nom.toLowerCase().includes(q)).slice(0, 8);
+  }, [produits, produitQuery]);
+
+  // Auto-calcul montant = quantité × prix unitaire
+  useEffect(() => {
+    const q = Number(quantite.replace(",", "."));
+    const pu = Number(prixUnit.replace(/\s/g, "").replace(",", "."));
+    if (q > 0 && pu > 0) setMontant(String(Math.round(q * pu)));
+  }, [quantite, prixUnit]);
+
+  function pickProduit(p: { nom: string; prix_unitaire: number; categorie: string }) {
+    setDescription(p.nom);
+    setProduitQuery(p.nom);
+    setPrixUnit(String(p.prix_unitaire));
+    if (CATEGORIES.includes(p.categorie)) setCategorie(p.categorie);
+    setShowSuggest(false);
+  }
 
   const m = useMutation({
     mutationFn: async () => {
@@ -126,7 +164,62 @@ function NewOperation() {
           </div>
           <h1 className="font-display text-xl font-bold text-primary mt-1">Nouvelle {accent.label.toLowerCase()}</h1>
         </div>
+        <Link to="/produits" className="text-xs font-semibold text-primary inline-flex items-center gap-1">
+          <Package className="w-4 h-4" /> Produits
+        </Link>
       </header>
+
+      <Field label="Produit (optionnel)">
+        <div className="relative">
+          <input
+            type="text"
+            placeholder="Cherche un produit…"
+            value={produitQuery}
+            onChange={(e) => { setProduitQuery(e.target.value); setShowSuggest(true); }}
+            onFocus={() => setShowSuggest(true)}
+            onBlur={() => setTimeout(() => setShowSuggest(false), 200)}
+            className="w-full h-11 px-3 rounded-xl bg-card border border-border focus:outline-none focus:ring-2 focus:ring-ring"
+          />
+          {showSuggest && suggestions.length > 0 && (
+            <ul className="absolute z-20 left-0 right-0 mt-1 max-h-64 overflow-auto rounded-xl bg-card border border-border shadow-lg">
+              {suggestions.map((p) => (
+                <li key={p.id}>
+                  <button
+                    type="button"
+                    onClick={() => pickProduit(p)}
+                    className="w-full text-left px-3 py-2 hover:bg-muted text-sm flex justify-between gap-2"
+                  >
+                    <span className="truncate">{p.nom}</span>
+                    <span className="text-primary font-semibold tabular-nums">{new Intl.NumberFormat("fr-FR").format(p.prix_unitaire)} F</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </Field>
+
+      <div className="grid grid-cols-2 gap-3">
+        <Field label="Quantité">
+          <input
+            type="text"
+            inputMode="decimal"
+            value={quantite}
+            onChange={(e) => setQuantite(e.target.value)}
+            className="w-full h-12 px-3 rounded-xl bg-card border border-border focus:outline-none focus:ring-2 focus:ring-ring tabular-nums"
+          />
+        </Field>
+        <Field label="Prix unitaire">
+          <input
+            type="text"
+            inputMode="decimal"
+            placeholder="0"
+            value={prixUnit}
+            onChange={(e) => setPrixUnit(e.target.value)}
+            className="w-full h-12 px-3 rounded-xl bg-card border border-border focus:outline-none focus:ring-2 focus:ring-ring tabular-nums"
+          />
+        </Field>
+      </div>
 
       <Field label="Montant (FCFA)">
         <input
