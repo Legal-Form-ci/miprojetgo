@@ -118,7 +118,7 @@ function VoicePage() {
     committedCountRef.current = 0;
     const rec = new Ctor();
     rec.lang = "fr-FR";
-    rec.continuous = true;
+    rec.continuous = false; // push-to-talk : on s'arrête au premier silence
     rec.interimResults = true;
     rec.maxAlternatives = 1;
     rec.onresult = (e) => {
