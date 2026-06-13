@@ -4,8 +4,9 @@ import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { exportHistoryCsv, exportHistoryReport } from "@/lib/export.functions";
-import { ArrowDownCircle, ArrowUpCircle, Trash2, Search, Download, FileText } from "lucide-react";
+import { ArrowDownCircle, ArrowUpCircle, Trash2, Search, Download, FileText, FileSpreadsheet } from "lucide-react";
 import { toast } from "sonner";
+import * as XLSX from "xlsx";
 
 export const Route = createFileRoute("/_authenticated/historique")({
   head: () => ({ meta: [{ title: "Historique — MaestraBook" }] }),
@@ -62,6 +63,7 @@ function History() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [reporting, setReporting] = useState(false);
+  const [xlsxing, setXlsxing] = useState(false);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: u }) => {
@@ -156,6 +158,43 @@ function History() {
     }
   }
 
+  async function handleExcel() {
+    if (ops.length === 0) return toast.error("Rien à exporter");
+    setXlsxing(true);
+    try {
+      const totIn = ops.filter((o) => o.type === "entree").reduce((s, o) => s + Number(o.montant), 0);
+      const totOut = ops.filter((o) => o.type === "sortie").reduce((s, o) => s + Number(o.montant), 0);
+      const rows = ops.map((o) => {
+        const d = new Date(o.date_operation);
+        return {
+          Date: d.toLocaleDateString("fr-FR"),
+          Heure: d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }),
+          Type: o.type === "entree" ? "Entrée" : "Sortie",
+          Description: o.description,
+          Catégorie: o.categorie,
+          Paiement: o.mode_paiement,
+          "Montant (FCFA)": Number(o.montant),
+          Note: o.note ?? "",
+        };
+      });
+      rows.push(
+        { Date: "", Heure: "", Type: "", Description: "", Catégorie: "", Paiement: "TOTAL ENTRÉES", "Montant (FCFA)": totIn, Note: "" },
+        { Date: "", Heure: "", Type: "", Description: "", Catégorie: "", Paiement: "TOTAL SORTIES", "Montant (FCFA)": totOut, Note: "" },
+        { Date: "", Heure: "", Type: "", Description: "", Catégorie: "", Paiement: "BÉNÉFICE NET", "Montant (FCFA)": totIn - totOut, Note: "" },
+      );
+      const ws = XLSX.utils.json_to_sheet(rows);
+      ws["!cols"] = [{ wch: 12 }, { wch: 8 }, { wch: 10 }, { wch: 32 }, { wch: 14 }, { wch: 16 }, { wch: 14 }, { wch: 20 }];
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Opérations");
+      XLSX.writeFile(wb, `maestrabook-${new Date().toISOString().slice(0, 10)}.xlsx`);
+      toast.success(`${ops.length} ligne(s) exportée(s)`);
+    } catch (e) {
+      toast.error((e as Error).message || "Export Excel impossible");
+    } finally {
+      setXlsxing(false);
+    }
+  }
+
   return (
     <div className="space-y-4">
       <header className="flex items-start justify-between gap-3">
@@ -172,6 +211,13 @@ function History() {
               style={{ background: "var(--gradient-primary)" }}
             >
               <FileText className="w-4 h-4" /> {reporting ? "Rapport…" : "Rapport PDF"}
+            </button>
+            <button
+              onClick={handleExcel}
+              disabled={xlsxing}
+              className="inline-flex items-center gap-1.5 h-9 px-3 rounded-xl bg-card border border-border text-foreground text-xs font-semibold"
+            >
+              <FileSpreadsheet className="w-4 h-4" /> {xlsxing ? "Excel…" : "Excel"}
             </button>
             <button
               onClick={handleExport}
