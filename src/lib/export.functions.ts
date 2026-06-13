@@ -204,6 +204,17 @@ export const exportHistoryReport = createServerFn({ method: "POST" })
       </section>`;
     }).join("");
 
+    const totalGlobal = `
+      <section class="total-global">
+        <h2>Total global de la periode</h2>
+        <table class="tg">
+          <tr><td>Operations</td><td class="num">${ops.length}</td></tr>
+          <tr><td>Total entrees</td><td class="num g">${esc(fmtMoney(totEntree))}</td></tr>
+          <tr><td>Total sorties</td><td class="num r">${esc(fmtMoney(totSortie))}</td></tr>
+          <tr class="bal"><td>Benefice net</td><td class="num ${benefice >= 0 ? "g" : "r"}">${esc(fmtMoney(benefice))}</td></tr>
+        </table>
+      </section>`;
+
     const html = `<!doctype html>
 <html lang="fr"><head><meta charset="utf-8"/>
 <title>Rapport financier MaestraBook</title>
@@ -266,7 +277,7 @@ export const exportHistoryReport = createServerFn({ method: "POST" })
 
   ${ops.length === 0
     ? `<p style="text-align:center;padding:40px;color:#666">Aucune operation pour cette periode.</p>`
-    : monthSections}
+    : monthSections + totalGlobal}
 
   <div class="footer">
     Document genere par MaestraBook &middot; ${esc(exportStamp)} &middot; Utilisable comme piece justificative
