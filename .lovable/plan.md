@@ -1,5 +1,29 @@
 
-## Réalité du chantier
+## État au 13/06/2026
+
+### Vague 1 ✅ livrée
+### Vague 2 ✅ livrée maintenant
+- Table `produits` + page CRUD `/produits` (chacun gère son catalogue)
+- `operations.new` : combobox produit (autocomplete) + Quantité × Prix unitaire → Montant auto
+- Voix : mode push-to-talk (`continuous = false`, l'IA s'arrête au silence)
+- Export `.xlsx` (lib `xlsx`) sur l'historique avec totaux (entrées, sorties, bénéfice)
+- Rapport PDF : bloc "Total global de la période" ajouté en bas
+- Nav mobile recompacté (Produits remplace Import + Sync → accessibles via Profil/Dashboard)
+
+### Hors scope technique (à valider avec toi)
+- **Vercel** : ce projet utilise nitro preset Cloudflare (configuré par `@lovable.dev/vite-tanstack-config`). Pour déployer sur Vercel il faudrait basculer le preset, ce que la config Lovable ne permet pas en l'état. Lovable héberge déjà l'app sur `maestrabook.lovable.app` (CDN équivalent). Si Vercel est obligatoire, dis-le et je te propose la marche à suivre (eject de la config Lovable).
+- **PWA** : déjà installable (manifest + icons + service worker `vite-plugin-pwa` autoUpdate). Aucune action requise.
+
+## Reste à faire (Vague 3 optionnelle)
+- WebAuthn (Face ID / empreinte navigateur)
+- Catégorisation IA produits en arrière-plan
+- Édition rapide post-import IA renforcée
+
+---
+
+## Historique des vagues
+
+### Réalité du chantier (rappel initial)
 
 Tu as listé ~18 features distinctes. Je ne peux pas tout livrer **dans un seul message** sans casser le build. Je propose 3 vagues séquentielles, chacune testable. Tu valides la vague 1, je lance la 2, etc.
 
