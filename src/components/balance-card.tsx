@@ -128,7 +128,7 @@ export function BalanceCard({
             className="shrink-0 italic font-display font-bold text-base sm:text-lg leading-none"
             style={{ letterSpacing: "0.02em" }}
           >
-            MaestraBook
+            MiProjet Go
           </div>
         </div>
       </div>
