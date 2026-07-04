@@ -8,7 +8,7 @@ import { Users, Shield, User as UserIcon, Loader2, PlusCircle } from "lucide-rea
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/utilisateurs")({
-  head: () => ({ meta: [{ title: "Utilisateurs — MaestraBook" }] }),
+  head: () => ({ meta: [{ title: "Utilisateurs — MiProjet Go" }] }),
   beforeLoad: async () => {
     const { data: u } = await supabase.auth.getUser();
     if (!u.user) throw redirect({ to: "/auth" });

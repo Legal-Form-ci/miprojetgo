@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/produits")({
-  head: () => ({ meta: [{ title: "Mes produits — MaestraBook" }] }),
+  head: () => ({ meta: [{ title: "Mes produits — MiProjet Go" }] }),
   component: ProduitsPage,
 });
 

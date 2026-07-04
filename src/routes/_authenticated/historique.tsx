@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import * as XLSX from "xlsx";
 
 export const Route = createFileRoute("/_authenticated/historique")({
-  head: () => ({ meta: [{ title: "Historique — MaestraBook" }] }),
+  head: () => ({ meta: [{ title: "Historique — MiProjet Go" }] }),
   component: History,
 });
 
@@ -186,7 +186,7 @@ function History() {
       ws["!cols"] = [{ wch: 12 }, { wch: 8 }, { wch: 10 }, { wch: 32 }, { wch: 14 }, { wch: 16 }, { wch: 14 }, { wch: 20 }];
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "Opérations");
-      XLSX.writeFile(wb, `maestrabook-${new Date().toISOString().slice(0, 10)}.xlsx`);
+      XLSX.writeFile(wb, `miprojet-go-${new Date().toISOString().slice(0, 10)}.xlsx`);
       toast.success(`${ops.length} ligne(s) exportée(s)`);
     } catch (e) {
       toast.error((e as Error).message || "Export Excel impossible");

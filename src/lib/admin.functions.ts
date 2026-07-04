@@ -3,7 +3,7 @@ import { z } from "zod";
 
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-const phoneToEmail = (phone: string) => `${phone.replace(/\D/g, "")}@maestrabook.app`;
+const phoneToEmail = (phone: string) => `${phone.replace(/\D/g, "")}@miprojet.app`;
 
 const createVendorSchema = z.object({
   fullName: z.string().trim().min(2, "Nom requis").max(80, "Nom trop long"),

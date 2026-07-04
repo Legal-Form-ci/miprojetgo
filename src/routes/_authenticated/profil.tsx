@@ -8,7 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { avatarSignedUrl, cropSquareAndCompress } from "@/lib/avatar";
 
 export const Route = createFileRoute("/_authenticated/profil")({
-  head: () => ({ meta: [{ title: "Mon profil — MaestraBook" }] }),
+  head: () => ({ meta: [{ title: "Mon profil — MiProjet Go" }] }),
   component: ProfilPage,
 });
 

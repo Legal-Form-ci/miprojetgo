@@ -10,7 +10,7 @@ import type { ValidatedImportLine } from "@/lib/import-ai";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/import")({
-  head: () => ({ meta: [{ title: "Import IA — MaestraBook" }] }),
+  head: () => ({ meta: [{ title: "Import IA — MiProjet Go" }] }),
   component: ImportPage,
 });
 

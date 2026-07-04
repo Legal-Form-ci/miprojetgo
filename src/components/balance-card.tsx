@@ -51,7 +51,7 @@ export function BalanceCard({
   const entreePeriode = ops.filter((o) => o.type === "entree" && inRange(o)).reduce((s, o) => s + Number(o.montant), 0);
   const sortiePeriode = ops.filter((o) => o.type === "sortie" && inRange(o)).reduce((s, o) => s + Number(o.montant), 0);
 
-  const displayName = (fullName?.trim() || "Maestra Vendeur").toUpperCase();
+  const displayName = (fullName?.trim() || "Utilisateur MiProjet").toUpperCase();
 
   return (
     <section className="space-y-3">
