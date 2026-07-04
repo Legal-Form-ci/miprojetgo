@@ -2,7 +2,7 @@ import { createFileRoute, Outlet, redirect, Link, useNavigate, useRouterState } 
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 import { LayoutDashboard, PlusCircle, History, LogOut, Users, Camera, ListChecks, Mic, User as UserIcon, Package } from "lucide-react";
-import logo from "@/assets/maestrabook-logo.png.asset.json";
+import logo from "@/assets/miprojet-go-logo.png.asset.json";
 import { SyncBanner } from "@/components/sync-banner";
 import { useIdleLogout } from "@/hooks/use-idle-logout";
 
@@ -66,11 +66,9 @@ function AuthedLayout() {
     <div className="min-h-screen flex flex-col bg-background">
       <header className="sticky top-0 z-30 backdrop-blur bg-background/85 border-b border-border">
         <div className="max-w-2xl mx-auto px-4 h-14 flex items-center justify-between">
-          <Link to="/dashboard" className="flex items-center gap-2">
-            <img src={logo.url} alt="" className="w-9 h-9 object-contain" />
-            <span className="font-display font-bold text-primary text-lg leading-none">
-              MaestraBook
-            </span>
+          <Link to="/dashboard" className="flex items-center gap-2 min-w-0">
+            <img src={logo.url} alt="MiProjet Go" className="h-8 w-auto object-contain shrink-0" />
+            <span className="sr-only">MiProjet Go</span>
           </Link>
           <div className="flex items-center gap-2">
             <Link
