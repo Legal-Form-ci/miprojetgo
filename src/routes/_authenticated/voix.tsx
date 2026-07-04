@@ -8,7 +8,7 @@ import { parseVoiceOperation, type VoiceParsedOperation } from "@/lib/voice-pars
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/voix")({
-  head: () => ({ meta: [{ title: "Saisie vocale — MaestraBook" }] }),
+  head: () => ({ meta: [{ title: "Saisie vocale — MiProjet Go" }] }),
   ssr: false,
   component: VoicePage,
 });
@@ -92,7 +92,7 @@ function VoicePage() {
   const [analyzing, setAnalyzing] = useState(false);
   const [result, setResult] = useState<VoiceParsedOperation | null>(null);
   const [supported, setSupported] = useState<boolean | null>(null);
-  const [userName, setUserName] = useState("Maestra");
+  const [userName, setUserName] = useState("Entrepreneur");
   const recRef = useRef<SpeechRec | null>(null);
   const committedCountRef = useRef(0);
 
@@ -100,7 +100,7 @@ function VoicePage() {
     setSupported(!!getRecognitionCtor());
     supabase.auth.getUser().then(({ data }) => {
       const meta = (data.user?.user_metadata ?? {}) as { name?: string; full_name?: string };
-      const name = meta.name || meta.full_name || "Maestra";
+      const name = meta.name || meta.full_name || "Entrepreneur";
       setUserName(name);
       const msg = greetingFor(name);
       // Délai pour laisser l'autorisation audio se faire au premier clic
@@ -228,7 +228,7 @@ function VoicePage() {
           style={{
             background: listening
               ? "linear-gradient(135deg, #991b1b, #ef4444)"
-              : "linear-gradient(135deg, #4a1322, #7a1f37)",
+              : "var(--gradient-primary)",
             boxShadow: "0 18px 40px -16px rgba(0,0,0,0.5)",
           }}
         >

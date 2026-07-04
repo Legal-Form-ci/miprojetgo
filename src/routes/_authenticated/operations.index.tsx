@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowUpCircle, ArrowDownCircle } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/operations/")({
-  head: () => ({ meta: [{ title: "Nouvelle opération — MaestraBook" }] }),
+  head: () => ({ meta: [{ title: "Nouvelle opération — MiProjet Go" }] }),
   component: ChoosePage,
 });
 

@@ -14,7 +14,7 @@ import {
 } from "@/lib/offline-queue";
 
 export const Route = createFileRoute("/_authenticated/synchronisation")({
-  head: () => ({ meta: [{ title: "Synchronisation — MaestraBook" }] }),
+  head: () => ({ meta: [{ title: "Synchronisation — MiProjet Go" }] }),
   component: SyncLogPage,
 });
 

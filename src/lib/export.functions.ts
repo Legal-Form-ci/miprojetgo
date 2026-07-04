@@ -89,7 +89,7 @@ export const exportHistoryCsv = createServerFn({ method: "POST" })
       });
 
     return {
-      filename: `maestrabook-${new Date().toISOString().slice(0, 10)}.csv`,
+      filename: `miprojet-go-${new Date().toISOString().slice(0, 10)}.csv`,
       csv: [header, ...body].map((row) => row.map(csvCell).join(",")).join("\n"),
       count: body.length,
     };
@@ -217,7 +217,7 @@ export const exportHistoryReport = createServerFn({ method: "POST" })
 
     const html = `<!doctype html>
 <html lang="fr"><head><meta charset="utf-8"/>
-<title>Rapport financier MaestraBook</title>
+<title>Rapport financier MiProjet Go</title>
 <style>
   *{box-sizing:border-box}
   body{font-family:'Helvetica Neue',Arial,sans-serif;color:#1a1a1a;background:#f5f3ef;margin:0;padding:32px}
@@ -264,7 +264,7 @@ export const exportHistoryReport = createServerFn({ method: "POST" })
 <div class="page">
   <div class="cover">
     <div class="brand">
-      <h1>MaestraBook</h1>
+      <h1>MiProjet Go</h1>
       <p>Rapport financier officiel</p>
     </div>
     <div class="meta">
@@ -286,7 +286,7 @@ export const exportHistoryReport = createServerFn({ method: "POST" })
     : monthSections + totalGlobal}
 
   <div class="footer">
-    Document genere par MaestraBook &middot; ${esc(exportStamp)} &middot; Utilisable comme piece justificative
+    Document genere par MiProjet Go &middot; ${esc(exportStamp)} &middot; Utilisable comme piece justificative
     pour banques et structures de financement.
   </div>
 </div>
@@ -294,7 +294,7 @@ export const exportHistoryReport = createServerFn({ method: "POST" })
 </body></html>`;
 
     return {
-      filename: `rapport-maestrabook-${now.toISOString().slice(0, 10)}.html`,
+      filename: `rapport-miprojet-go-${now.toISOString().slice(0, 10)}.html`,
       html,
       count: ops.length,
       totals: { entree: totEntree, sortie: totSortie, benefice },

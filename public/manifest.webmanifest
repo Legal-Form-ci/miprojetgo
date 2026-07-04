@@ -1,0 +1,17 @@
+{
+  "name": "MiProjet Go — L'app des entrepreneurs",
+  "short_name": "MiProjet Go",
+  "description": "Gestion des ventes, dépenses, stocks et équipes pour commerçants, artisans et TPE.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#ffffff",
+  "theme_color": "#1E4CA1",
+  "lang": "fr",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

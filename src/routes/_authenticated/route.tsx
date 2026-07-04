@@ -1,8 +1,8 @@
 import { createFileRoute, Outlet, redirect, Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
-import { LayoutDashboard, PlusCircle, History, LogOut, Users, Camera, ListChecks, Mic, User as UserIcon, Package } from "lucide-react";
-import logo from "@/assets/maestrabook-logo.png.asset.json";
+import { LayoutDashboard, PlusCircle, History, LogOut, Users, Mic, User as UserIcon, Package, Store, ChevronDown } from "lucide-react";
+import logo from "@/assets/miprojet-go-logo.png.asset.json";
 import { SyncBanner } from "@/components/sync-banner";
 import { useIdleLogout } from "@/hooks/use-idle-logout";
 
@@ -64,27 +64,33 @@ function AuthedLayout() {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      <header className="sticky top-0 z-30 backdrop-blur bg-background/85 border-b border-border">
-        <div className="max-w-2xl mx-auto px-4 h-14 flex items-center justify-between">
-          <Link to="/dashboard" className="flex items-center gap-2">
-            <img src={logo.url} alt="" className="w-9 h-9 object-contain" />
-            <span className="font-display font-bold text-primary text-lg leading-none">
-              MaestraBook
-            </span>
+      <header className="sticky top-0 z-30 backdrop-blur-md bg-background/90 border-b border-border shadow-[var(--shadow-soft)]">
+        <div className="max-w-2xl mx-auto px-4 h-16 grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3">
+          <Link to="/dashboard" className="flex items-center shrink-0">
+            <img src={logo.url} alt="MiProjet Go" className="h-9 w-auto object-contain" />
+            <span className="sr-only">MiProjet Go</span>
           </Link>
-          <div className="flex items-center gap-2">
+          {/* Sélecteur d'espace d'activité (multi-tenant UI, DB à venir) */}
+          <button
+            type="button"
+            className="min-w-0 flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-secondary/80 text-secondary-foreground text-xs font-semibold border border-border/60 hover:border-primary/40 transition-colors"
+            title="Changer d'espace d'activité"
+          >
+            <Store className="w-3.5 h-3.5 shrink-0" />
+            <span className="truncate">Mon activité</span>
+            <ChevronDown className="w-3 h-3 shrink-0 opacity-70" />
+          </button>
+          <div className="flex items-center gap-1 shrink-0">
             <Link
               to="/profil"
-              className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-primary transition-colors"
+              className="flex items-center justify-center w-9 h-9 rounded-full text-muted-foreground hover:text-primary hover:bg-secondary transition-colors"
+              aria-label="Profil"
             >
               <UserIcon className="w-4 h-4" />
-              <span className="hidden sm:inline truncate max-w-[120px]">
-                {profile?.full_name || profile?.phone || "Profil"}
-              </span>
             </Link>
             <button
               onClick={signOut}
-              className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-destructive transition-colors"
+              className="flex items-center justify-center w-9 h-9 rounded-full text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
               aria-label="Déconnexion"
             >
               <LogOut className="w-4 h-4" />

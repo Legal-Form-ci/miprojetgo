@@ -1,22 +1,22 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import logo from "@/assets/maestrabook-logo.png.asset.json";
+import logo from "@/assets/miprojet-go-logo.png.asset.json";
 import { toast } from "sonner";
 import { Loader2, Eye, EyeOff, Phone, Lock } from "lucide-react";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
-      { title: "MaestraBook — Connexion" },
-      { name: "description", content: "Tes comptes. Ton contrôle." },
+      { title: "MiProjet Go — Connexion" },
+      { name: "description", content: "L'app de gestion des entrepreneurs, commerçants et TPE." },
     ],
   }),
   component: AuthPage,
 });
 
 function phoneToEmail(phone: string) {
-  return `${phone.replace(/\D/g, "")}@maestrabook.app`;
+  return `${phone.replace(/\D/g, "")}@miprojet.app`;
 }
 
 function AuthPage() {
@@ -67,31 +67,31 @@ function AuthPage() {
       {/* Subtle warm accents */}
       <div
         aria-hidden
-        className="pointer-events-none absolute -top-32 -left-32 w-80 h-80 rounded-full opacity-20 blur-3xl"
-        style={{ background: "var(--gold)" }}
+        className="pointer-events-none absolute -top-32 -left-32 w-80 h-80 rounded-full opacity-25 blur-3xl"
+        style={{ background: "var(--brand-blue)" }}
       />
       <div
         aria-hidden
-        className="pointer-events-none absolute -bottom-32 -right-24 w-96 h-96 rounded-full opacity-15 blur-3xl"
-        style={{ background: "var(--primary)" }}
+        className="pointer-events-none absolute -bottom-32 -right-24 w-96 h-96 rounded-full opacity-20 blur-3xl"
+        style={{ background: "var(--brand-green)" }}
       />
 
       <div className="w-full max-w-sm relative">
         <div className="flex flex-col items-center mb-10">
-          <div className="relative mb-6">
+          <div className="relative mb-4">
             <div
               aria-hidden
-              className="absolute inset-0 rounded-[2rem] blur-2xl opacity-40"
-              style={{ background: "var(--gradient-gold)" }}
+              className="absolute inset-0 rounded-[2rem] blur-2xl opacity-30"
+              style={{ background: "var(--gradient-brand)" }}
             />
             <img
               src={logo.url}
-              alt="MaestraBook"
-              className="relative w-52 h-52 object-contain drop-shadow-xl"
+              alt="MiProjet Go"
+              className="relative h-24 w-auto object-contain drop-shadow-xl"
             />
           </div>
-          <p className="text-sm italic font-medium" style={{ color: "oklch(0.55 0.14 60)" }}>
-            Tes comptes. Ton contrôle.
+          <p className="text-sm font-medium text-brand-earth" style={{ color: "var(--brand-earth)" }}>
+            Entrepreneuriat jeune — gestion simple &amp; pro.
           </p>
         </div>
 
@@ -171,7 +171,7 @@ function AuthPage() {
         </form>
 
         <p className="text-center text-xs mt-6 text-muted-foreground">
-          © {new Date().getFullYear()} Cave chez Maestra
+          © {new Date().getFullYear()} MiProjet Go — Écosystème MiProjet
         </p>
       </div>
     </div>

@@ -5,7 +5,7 @@ import { ArrowDownCircle, ArrowUpCircle, Mic } from "lucide-react";
 import { BalanceCard } from "@/components/balance-card";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
-  head: () => ({ meta: [{ title: "Tableau de bord — MaestraBook" }] }),
+  head: () => ({ meta: [{ title: "Tableau de bord — MiProjet Go" }] }),
   component: Dashboard,
 });
 
@@ -89,7 +89,7 @@ function Dashboard() {
     <div className="space-y-6">
       <header className="min-w-0">
         <h1 className="font-display text-xl sm:text-2xl font-bold text-primary leading-tight truncate">
-          Bonjour {meta?.profile?.first_name || "Maestra"}
+          Bonjour {meta?.profile?.first_name || "Entrepreneur"}
         </h1>
         <p className="text-xs text-muted-foreground italic mt-0.5">
           {isAdmin ? "Vue globale de toutes les opérations." : "Tes comptes. Ton contrôle."}

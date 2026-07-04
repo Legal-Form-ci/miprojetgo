@@ -7,7 +7,7 @@ import { ArrowDownCircle, ArrowUpCircle, Loader2, ArrowLeft, Package } from "luc
 import { enqueueOperation } from "@/lib/offline-queue";
 
 export const Route = createFileRoute("/_authenticated/operations/new")({
-  head: () => ({ meta: [{ title: "Nouvelle opération — MaestraBook" }] }),
+  head: () => ({ meta: [{ title: "Nouvelle opération — MiProjet Go" }] }),
   validateSearch: (s: Record<string, unknown>) => ({
     type: (s.type === "sortie" ? "sortie" : "entree") as "entree" | "sortie",
     montant: typeof s.montant === "string" ? s.montant : undefined,
