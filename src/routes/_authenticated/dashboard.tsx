@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowDownCircle, ArrowUpCircle, Mic } from "lucide-react";
 import { BalanceCard } from "@/components/balance-card";
+import { useTenants } from "@/lib/tenant";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({ meta: [{ title: "Tableau de bord — MiProjet Go" }] }),
@@ -24,6 +25,7 @@ function fmt(n: number) {
 }
 
 function Dashboard() {
+  const { active: tenant } = useTenants();
   const { data: meta } = useQuery({
     queryKey: ["dashboard-profile"],
     queryFn: async () => {
@@ -91,8 +93,13 @@ function Dashboard() {
         <h1 className="font-display text-xl sm:text-2xl font-bold text-primary leading-tight truncate">
           Bonjour {meta?.profile?.first_name || "Entrepreneur"}
         </h1>
-        <p className="text-xs text-muted-foreground italic mt-0.5">
-          {isAdmin ? "Vue globale de toutes les opérations." : "Tes comptes. Ton contrôle."}
+        <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1.5 flex-wrap">
+          <span aria-hidden>{tenant.emoji}</span>
+          <span className="font-semibold text-foreground/80 truncate max-w-[10rem]">{tenant.nom}</span>
+          <span className="opacity-60">·</span>
+          <span className="italic">
+            {isAdmin ? "Vue globale" : "Tes comptes. Ton contrôle."}
+          </span>
         </p>
       </header>
 
