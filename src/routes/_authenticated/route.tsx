@@ -1,10 +1,11 @@
 import { createFileRoute, Outlet, redirect, Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
-import { LayoutDashboard, PlusCircle, History, LogOut, Users, Mic, User as UserIcon, Package, Store, ChevronDown } from "lucide-react";
+import { LayoutDashboard, PlusCircle, History, LogOut, Users, Mic, User as UserIcon, Package } from "lucide-react";
 import logo from "@/assets/miprojet-go-logo.png.asset.json";
 import { SyncBanner } from "@/components/sync-banner";
 import { useIdleLogout } from "@/hooks/use-idle-logout";
+import { TenantSwitcher } from "@/components/tenant-switcher";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -71,15 +72,7 @@ function AuthedLayout() {
             <span className="sr-only">MiProjet Go</span>
           </Link>
           {/* Sélecteur d'espace d'activité (multi-tenant UI, DB à venir) */}
-          <button
-            type="button"
-            className="min-w-0 flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-secondary/80 text-secondary-foreground text-xs font-semibold border border-border/60 hover:border-primary/40 transition-colors"
-            title="Changer d'espace d'activité"
-          >
-            <Store className="w-3.5 h-3.5 shrink-0" />
-            <span className="truncate">Mon activité</span>
-            <ChevronDown className="w-3 h-3 shrink-0 opacity-70" />
-          </button>
+          <TenantSwitcher />
           <div className="flex items-center gap-1 shrink-0">
             <Link
               to="/profil"
