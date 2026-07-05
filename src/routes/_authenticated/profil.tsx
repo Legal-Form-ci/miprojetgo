@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { User, Camera, Save, Loader2, Shield } from "lucide-react";
+import { User, Camera, Save, Loader2, Shield, KeyRound, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -36,6 +36,9 @@ function ProfilPage() {
   });
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [pwd, setPwd] = useState({ next: "", confirm: "" });
+  const [changingPwd, setChangingPwd] = useState(false);
+  const [showPwd, setShowPwd] = useState(false);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -153,6 +156,22 @@ function ProfilPage() {
     }
   }
 
+  async function changePassword() {
+    if (pwd.next.length < 6) return toast.error("Mot de passe : 6 caractères minimum.");
+    if (pwd.next !== pwd.confirm) return toast.error("Les mots de passe ne correspondent pas.");
+    setChangingPwd(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password: pwd.next });
+      if (error) throw error;
+      setPwd({ next: "", confirm: "" });
+      toast.success("Mot de passe mis à jour");
+    } catch (err) {
+      toast.error((err as Error).message || "Impossible de changer le mot de passe");
+    } finally {
+      setChangingPwd(false);
+    }
+  }
+
   return (
     <div className="space-y-5">
       <header className="flex items-center gap-3">
@@ -233,6 +252,55 @@ function ProfilPage() {
           Enregistrer
         </button>
       </div>
+
+      {editingId === userId && (
+        <div className="rounded-2xl bg-card border border-border p-4 space-y-3" style={{ boxShadow: "var(--shadow-card)" }}>
+          <div className="flex items-center gap-2 text-primary">
+            <KeyRound className="w-4 h-4" />
+            <h2 className="font-display font-semibold">Sécurité — mot de passe</h2>
+          </div>
+          <p className="text-xs text-muted-foreground -mt-1">
+            Choisis un nouveau mot de passe (6 caractères min).
+          </p>
+          <div className="space-y-2">
+            <div className="relative">
+              <input
+                type={showPwd ? "text" : "password"}
+                value={pwd.next}
+                onChange={(e) => setPwd({ ...pwd, next: e.target.value })}
+                placeholder="Nouveau mot de passe"
+                autoComplete="new-password"
+                className="w-full h-11 pl-3 pr-10 rounded-xl bg-background border border-border focus:outline-none focus:ring-2 focus:ring-ring text-sm"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPwd((s) => !s)}
+                aria-label={showPwd ? "Masquer" : "Afficher"}
+                className="absolute right-1.5 top-1/2 -translate-y-1/2 w-8 h-8 rounded-lg text-muted-foreground hover:text-primary flex items-center justify-center"
+              >
+                {showPwd ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
+            <input
+              type={showPwd ? "text" : "password"}
+              value={pwd.confirm}
+              onChange={(e) => setPwd({ ...pwd, confirm: e.target.value })}
+              placeholder="Confirmer"
+              autoComplete="new-password"
+              className="w-full h-11 px-3 rounded-xl bg-background border border-border focus:outline-none focus:ring-2 focus:ring-ring text-sm"
+            />
+          </div>
+          <button
+            onClick={changePassword}
+            disabled={changingPwd || !pwd.next || !pwd.confirm}
+            className="w-full h-11 rounded-xl font-semibold text-primary-foreground flex items-center justify-center gap-2 disabled:opacity-60"
+            style={{ background: "var(--gradient-primary)" }}
+          >
+            {changingPwd ? <Loader2 className="w-4 h-4 animate-spin" /> : <KeyRound className="w-4 h-4" />}
+            Changer le mot de passe
+          </button>
+        </div>
+      )}
     </div>
   );
 }
