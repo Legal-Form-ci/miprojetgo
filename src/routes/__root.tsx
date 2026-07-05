@@ -91,8 +91,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:card", content: "summary" },
       { name: "twitter:title", content: "MiProjet Go — L'app des entrepreneurs" },
       { name: "twitter:description", content: "Gestion des ventes, dépenses, stocks et équipes pour commerçants, artisans et TPE." },
-      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/OI6nUHN0rMdlKjHmlXGUEQqHcM52/social-images/social-1780928328174-199111.webp" },
-      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/OI6nUHN0rMdlKjHmlXGUEQqHcM52/social-images/social-1780928328174-199111.webp" },
+      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/4b9bf299-b282-4ac5-9733-25a978c26f4b" },
+      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/4b9bf299-b282-4ac5-9733-25a978c26f4b" },
     ],
     links: [
       {
