@@ -4,9 +4,10 @@ import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { exportHistoryCsv, exportHistoryReport } from "@/lib/export.functions";
-import { ArrowDownCircle, ArrowUpCircle, Trash2, Search, Download, FileText, FileSpreadsheet } from "lucide-react";
+import { ArrowDownCircle, ArrowUpCircle, Trash2, Search, Download, FileText, FileSpreadsheet, Lock, Check, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
+import { useExportUnlocked, unlockExports, EXPORT_PLANS } from "@/lib/export-lock";
 
 export const Route = createFileRoute("/_authenticated/historique")({
   head: () => ({ meta: [{ title: "Historique — MiProjet Go" }] }),
@@ -64,6 +65,27 @@ function History() {
   const [exporting, setExporting] = useState(false);
   const [reporting, setReporting] = useState(false);
   const [xlsxing, setXlsxing] = useState(false);
+  const unlocked = useExportUnlocked();
+  const [showUnlock, setShowUnlock] = useState(false);
+  const [code, setCode] = useState("");
+
+  function guardExport(action: () => void) {
+    if (!unlocked) {
+      setShowUnlock(true);
+      toast.info("Exports & impression : fonction premium MiProjet");
+      return;
+    }
+    action();
+  }
+  function submitCode() {
+    if (unlockExports(code)) {
+      toast.success("Exports débloqués. Merci !");
+      setShowUnlock(false);
+      setCode("");
+    } else {
+      toast.error("Code invalide. Vérifie auprès de MiProjet.");
+    }
+  }
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: u }) => {
@@ -205,30 +227,133 @@ function History() {
         {isAdmin && (
           <div className="flex gap-2">
             <button
-              onClick={handleReport}
+              onClick={() => guardExport(handleReport)}
               disabled={reporting}
-              className="inline-flex items-center gap-1.5 h-9 px-3 rounded-xl text-primary-foreground text-xs font-semibold"
+              className="inline-flex items-center gap-1.5 h-9 px-3 rounded-xl text-primary-foreground text-xs font-semibold relative"
               style={{ background: "var(--gradient-primary)" }}
             >
-              <FileText className="w-4 h-4" /> {reporting ? "Rapport…" : "Rapport PDF"}
+              {unlocked ? <FileText className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
+              {reporting ? "Rapport…" : "Rapport PDF"}
             </button>
             <button
-              onClick={handleExcel}
+              onClick={() => guardExport(handleExcel)}
               disabled={xlsxing}
               className="inline-flex items-center gap-1.5 h-9 px-3 rounded-xl bg-card border border-border text-foreground text-xs font-semibold"
             >
-              <FileSpreadsheet className="w-4 h-4" /> {xlsxing ? "Excel…" : "Excel"}
+              {unlocked ? <FileSpreadsheet className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
+              {xlsxing ? "Excel…" : "Excel"}
             </button>
             <button
-              onClick={handleExport}
+              onClick={() => guardExport(handleExport)}
               disabled={exporting}
               className="inline-flex items-center gap-1.5 h-9 px-3 rounded-xl bg-card border border-border text-foreground text-xs font-semibold"
             >
-              <Download className="w-4 h-4" /> {exporting ? "CSV…" : "CSV"}
+              {unlocked ? <Download className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
+              {exporting ? "CSV…" : "CSV"}
             </button>
           </div>
         )}
       </header>
+
+      {isAdmin && !unlocked && (
+        <button
+          onClick={() => setShowUnlock(true)}
+          className="w-full flex items-center gap-2 rounded-xl border border-primary/30 bg-primary/5 px-3 py-2 text-left text-xs"
+        >
+          <Sparkles className="w-4 h-4 text-primary shrink-0" />
+          <span className="min-w-0 flex-1 text-foreground/80">
+            <span className="font-semibold text-primary">Consultation libre.</span>{" "}
+            Impression, téléchargement et partage — débloquer via un forfait MiProjet.
+          </span>
+          <span className="shrink-0 font-semibold text-primary underline">Voir</span>
+        </button>
+      )}
+
+      {showUnlock && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 p-3"
+          onClick={() => setShowUnlock(false)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-md rounded-3xl bg-card border border-border p-5 space-y-4"
+            style={{ boxShadow: "var(--shadow-elegant)" }}
+          >
+            <div className="flex items-start gap-3">
+              <div
+                className="w-10 h-10 rounded-xl flex items-center justify-center text-primary-foreground"
+                style={{ background: "var(--gradient-primary)" }}
+              >
+                <Sparkles className="w-5 h-5" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-display text-lg font-bold text-primary">Débloquer les exports</h3>
+                <p className="text-xs text-muted-foreground">
+                  Forfaits abordables. Impression, PDF, Excel, CSV et partage inclus.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid gap-2">
+              {EXPORT_PLANS.map((p) => (
+                <div
+                  key={p.id}
+                  className={`rounded-2xl border p-3 ${p.highlight ? "border-primary bg-primary/5" : "border-border bg-background"}`}
+                >
+                  <div className="flex items-baseline justify-between gap-2">
+                    <div className="font-semibold text-foreground text-sm">{p.label}</div>
+                    <div className="text-right">
+                      <div className="font-display font-bold text-primary">{p.price}</div>
+                      <div className="text-[10px] text-muted-foreground -mt-0.5">{p.period}</div>
+                    </div>
+                  </div>
+                  <ul className="mt-1.5 space-y-0.5">
+                    {p.perks.map((k) => (
+                      <li key={k} className="text-[11px] text-muted-foreground flex items-center gap-1.5">
+                        <Check className="w-3 h-3 text-[var(--success)]" /> {k}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+
+            <div className="rounded-xl bg-background border border-border p-3 space-y-2">
+              <label className="text-[11px] font-semibold uppercase tracking-wide text-foreground/80">
+                Code MiProjet
+              </label>
+              <input
+                value={code}
+                onChange={(e) => setCode(e.target.value)}
+                placeholder="MPG-…"
+                className="w-full h-11 px-3 rounded-xl bg-card border border-border focus:outline-none focus:ring-2 focus:ring-ring text-sm uppercase tracking-widest"
+              />
+              <p className="text-[10px] text-muted-foreground">
+                MiProjet t'envoie un code après paiement du forfait choisi.
+              </p>
+            </div>
+
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowUnlock(false)}
+                className="flex-1 h-11 rounded-xl border border-border bg-background text-sm font-semibold text-muted-foreground"
+              >
+                Plus tard
+              </button>
+              <button
+                onClick={submitCode}
+                disabled={!code.trim()}
+                className="flex-1 h-11 rounded-xl text-primary-foreground text-sm font-semibold disabled:opacity-60"
+                style={{ background: "var(--gradient-primary)" }}
+              >
+                Débloquer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="flex gap-2 overflow-x-auto -mx-4 px-4 pb-1 scrollbar-none">
         {PERIODES.map((p) => (
