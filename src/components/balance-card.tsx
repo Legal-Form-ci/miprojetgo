@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { ArrowDownCircle, ArrowUpCircle, Wallet, User } from "lucide-react";
 import { getTier, periodeStart, PERIODE_LABEL, type Periode } from "@/lib/tier";
 import { avatarSignedUrl } from "@/lib/avatar";
+import mark from "@/assets/miprojet-go-mark.png.asset.json";
 
 type Op = { type: "entree" | "sortie"; montant: number; date_operation: string };
 
@@ -124,12 +125,14 @@ export function BalanceCard({
               </div>
             </div>
           </div>
-          <div
-            className="shrink-0 italic font-display font-bold text-base sm:text-lg leading-none"
-            style={{ letterSpacing: "0.02em" }}
-          >
-            MiProjet Go
-          </div>
+          <img
+            src={mark.url}
+            alt="MiProjet Go"
+            width={64}
+            height={64}
+            loading="lazy"
+            className="shrink-0 h-8 sm:h-10 w-auto object-contain drop-shadow-[0_2px_4px_rgba(0,0,0,0.35)]"
+          />
         </div>
       </div>
 
