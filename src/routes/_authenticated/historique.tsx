@@ -352,11 +352,11 @@ function History() {
               </button>
               <button
                 onClick={submitCode}
-                disabled={!code.trim()}
+                disabled={!code.trim() || redeeming}
                 className="flex-1 h-11 rounded-xl text-primary-foreground text-sm font-semibold disabled:opacity-60"
                 style={{ background: "var(--gradient-primary)" }}
               >
-                Débloquer
+                {redeeming ? "Vérification…" : "Débloquer"}
               </button>
             </div>
           </div>
