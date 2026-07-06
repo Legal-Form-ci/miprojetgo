@@ -3,6 +3,29 @@ import { z } from "zod";
 
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
+async function assertExportEntitlement(ctx: {
+  supabase: { from: (t: string) => unknown };
+  userId: string;
+}) {
+  const { data } = await (ctx.supabase as unknown as {
+    from: (t: string) => {
+      select: (c: string) => {
+        eq: (c: string, v: string) => {
+          maybeSingle: () => Promise<{ data: { export_unlocked_until: string | null } | null }>;
+        };
+      };
+    };
+  })
+    .from("profiles")
+    .select("export_unlocked_until")
+    .eq("id", ctx.userId)
+    .maybeSingle();
+  const until = data?.export_unlocked_until ?? null;
+  if (!until || new Date(until).getTime() <= Date.now()) {
+    throw new Error("Export verrouillé — active un forfait MiProjet Go pour continuer.");
+  }
+}
+
 const exportSchema = z.object({
   startIso: z.string().datetime().nullable(),
   typeFilter: z.enum(["all", "entree", "sortie"]).default("all"),
@@ -37,6 +60,7 @@ export const exportHistoryCsv = createServerFn({ method: "POST" })
     if (roleError || !adminRole) {
       throw new Error("Export réservé à l'admin.");
     }
+    await assertExportEntitlement(context);
 
     let request = context.supabase
       .from("operations")
@@ -119,6 +143,7 @@ export const exportHistoryReport = createServerFn({ method: "POST" })
     const { data: adminRole } = await context.supabase
       .from("user_roles").select("role").eq("user_id", context.userId).eq("role", "admin").maybeSingle();
     if (!adminRole) throw new Error("Rapport reserve a l'admin.");
+    await assertExportEntitlement(context);
 
     let request = context.supabase
       .from("operations")
