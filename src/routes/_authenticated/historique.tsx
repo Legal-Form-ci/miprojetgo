@@ -7,7 +7,7 @@ import { exportHistoryCsv, exportHistoryReport } from "@/lib/export.functions";
 import { ArrowDownCircle, ArrowUpCircle, Trash2, Search, Download, FileText, FileSpreadsheet, Lock, Check, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
-import { useExportUnlocked, unlockExports, EXPORT_PLANS } from "@/lib/export-lock";
+import { useExportUnlocked, useUnlockExports, EXPORT_PLANS } from "@/lib/export-lock";
 
 export const Route = createFileRoute("/_authenticated/historique")({
   head: () => ({ meta: [{ title: "Historique — MiProjet Go" }] }),
@@ -68,6 +68,8 @@ function History() {
   const unlocked = useExportUnlocked();
   const [showUnlock, setShowUnlock] = useState(false);
   const [code, setCode] = useState("");
+  const unlockExports = useUnlockExports();
+  const [redeeming, setRedeeming] = useState(false);
 
   function guardExport(action: () => void) {
     if (!unlocked) {
@@ -77,13 +79,19 @@ function History() {
     }
     action();
   }
-  function submitCode() {
-    if (unlockExports(code)) {
-      toast.success("Exports débloqués. Merci !");
-      setShowUnlock(false);
-      setCode("");
-    } else {
-      toast.error("Code invalide. Vérifie auprès de MiProjet.");
+  async function submitCode() {
+    setRedeeming(true);
+    try {
+      const ok = await unlockExports(code);
+      if (ok) {
+        toast.success("Exports débloqués. Merci !");
+        setShowUnlock(false);
+        setCode("");
+      } else {
+        toast.error("Code invalide. Vérifie auprès de MiProjet.");
+      }
+    } finally {
+      setRedeeming(false);
     }
   }
 
