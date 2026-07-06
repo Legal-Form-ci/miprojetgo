@@ -6,12 +6,8 @@
 
 /*
  * MiProjet Go — design system.
- * Palette: bleu profond MiProjet + vert dynamique + accent terre (brun chaud).
- * Typographie: Poppins (display) + Inter (texte).
- * Mobile-first, moderne, professionnel, accessible.
+ * Poppins (display) + Inter (texte) — chargés via <link> dans __root.tsx.
  */
-
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
 
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
