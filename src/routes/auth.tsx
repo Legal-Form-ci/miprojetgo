@@ -277,7 +277,7 @@ function AuthPage() {
             {mode === "login"
               ? <>Pas encore de compte ?{" "}
                   <button type="button" onClick={() => setMode("signup")} className="font-semibold text-primary underline underline-offset-2">
-                    Inscris-toi ici
+                    Créer mon espace activité
                   </button>
                 </>
               : <>Tu as déjà un compte ?{" "}
@@ -287,6 +287,12 @@ function AuthPage() {
                 </>}
           </p>
         </form>
+        {mode === "signup" && (
+          <p className="text-[11px] text-center mt-3 text-muted-foreground px-2">
+            Tu veux juste aider quelqu'un dans son activité (gérant, caissier, livreur) ?
+            Demande au propriétaire de te créer un accès depuis son espace — pas besoin de créer un compte ici.
+          </p>
+        )}
 
         <p className="text-center text-xs mt-6 text-muted-foreground">
           © {new Date().getFullYear()} MiProjet Go — Écosystème MiProjet
