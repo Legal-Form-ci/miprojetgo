@@ -44,6 +44,13 @@ function AuthedLayout() {
 
   async function signOut() {
     await supabase.auth.signOut();
+    try {
+      localStorage.removeItem("maestrabook.rq-cache.v1");
+      localStorage.removeItem("maestrabook.offline-queue.v1");
+      localStorage.removeItem("mpg_export_unlock_code");
+    } catch {
+      /* noop */
+    }
     navigate({ to: "/auth", replace: true });
   }
 
