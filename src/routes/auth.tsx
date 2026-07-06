@@ -186,7 +186,7 @@ function AuthPage() {
               <p className="text-xs text-muted-foreground">
                 {mode === "login"
                   ? "Connecte-toi pour retrouver ton activité."
-                  : "Tu es propriétaire d'une activité ? Inscris-toi en 30 secondes."}
+                  : "Tu es propriétaire d'une activité ? Crée ton espace en 30 secondes — tu deviens automatiquement responsable et peux ajouter tes gérants, caissiers et livreurs."}
               </p>
             </div>
           </div>
