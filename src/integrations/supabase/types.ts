@@ -159,6 +159,7 @@ export type Database = {
         Row: {
           avatar_url: string | null
           created_at: string
+          export_unlocked_until: string | null
           first_name: string | null
           full_name: string | null
           id: string
@@ -169,6 +170,7 @@ export type Database = {
         Insert: {
           avatar_url?: string | null
           created_at?: string
+          export_unlocked_until?: string | null
           first_name?: string | null
           full_name?: string | null
           id: string
@@ -179,6 +181,7 @@ export type Database = {
         Update: {
           avatar_url?: string | null
           created_at?: string
+          export_unlocked_until?: string | null
           first_name?: string | null
           full_name?: string | null
           id?: string
@@ -220,13 +223,6 @@ export type Database = {
       }
     }
     Functions: {
-      has_role: {
-        Args: {
-          _role: Database["public"]["Enums"]["app_role"]
-          _user_id: string
-        }
-        Returns: boolean
-      }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
     }
