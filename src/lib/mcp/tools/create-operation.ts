@@ -36,7 +36,7 @@ export default defineTool({
         categorie: input.categorie,
         mode_paiement: input.mode_paiement,
         note: input.note ?? null,
-        source: "mcp",
+        source: "manuel",
         date_operation: new Date().toISOString(),
       })
       .select()
