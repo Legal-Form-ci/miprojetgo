@@ -1,13 +1,6 @@
-import { useSyncExternalStore } from "react";
-
-const KEY = "mpg_export_unlock_code";
-// Codes forfaitaires distribués par MiProjet (UI only, DB à venir)
-const VALID_CODES = new Set([
-  "MPG-MENSUEL",
-  "MPG-TRIMESTRE",
-  "MPG-ANNUEL",
-  "MPG-DEMO",
-]);
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { getExportEntitlement, redeemExportCode } from "@/lib/redeem-export.functions";
 
 export type ExportPlan = {
   id: string;
@@ -43,59 +36,29 @@ export const EXPORT_PLANS: ExportPlan[] = [
   },
 ];
 
-const listeners = new Set<() => void>();
-function notify() {
-  listeners.forEach((l) => l());
-}
-
-function read(): string | null {
-  if (typeof window === "undefined") return null;
-  try {
-    return window.localStorage.getItem(KEY);
-  } catch {
-    return null;
-  }
-}
-
-export function isExportUnlocked(): boolean {
-  return !!read();
-}
-
-export function unlockExports(code: string): boolean {
-  const trimmed = code.trim().toUpperCase();
-  if (!VALID_CODES.has(trimmed)) return false;
-  try {
-    window.localStorage.setItem(KEY, trimmed);
-  } catch {
-    return false;
-  }
-  notify();
-  return true;
-}
-
-export function lockExports() {
-  try {
-    window.localStorage.removeItem(KEY);
-  } catch {
-    /* noop */
-  }
-  notify();
-}
+const QK = ["export-entitlement"] as const;
 
 export function useExportUnlocked(): boolean {
-  return useSyncExternalStore(
-    (cb) => {
-      listeners.add(cb);
-      const onStorage = (e: StorageEvent) => {
-        if (e.key === KEY) cb();
-      };
-      window.addEventListener("storage", onStorage);
-      return () => {
-        listeners.delete(cb);
-        window.removeEventListener("storage", onStorage);
-      };
-    },
-    () => (read() ? "1" : "0"),
-    () => "0",
-  ) === "1";
+  const fetchEntitlement = useServerFn(getExportEntitlement);
+  const { data } = useQuery({
+    queryKey: QK,
+    queryFn: () => fetchEntitlement(),
+    staleTime: 60_000,
+  });
+  return !!data?.unlocked;
+}
+
+export function useUnlockExports() {
+  const qc = useQueryClient();
+  const redeem = useServerFn(redeemExportCode);
+  return async (code: string): Promise<boolean> => {
+    try {
+      const res = await redeem({ data: { code } });
+      if (!res?.ok) return false;
+      await qc.invalidateQueries({ queryKey: QK });
+      return true;
+    } catch {
+      return false;
+    }
+  };
 }
