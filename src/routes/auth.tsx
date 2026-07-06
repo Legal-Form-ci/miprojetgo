@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, useSearch } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import logo from "@/assets/miprojet-go-logo.png.asset.json";
@@ -6,6 +6,9 @@ import { toast } from "sonner";
 import { Loader2, Eye, EyeOff, Phone, Lock, User, Sparkles } from "lucide-react";
 
 export const Route = createFileRoute("/auth")({
+  validateSearch: (s: Record<string, unknown>) => ({
+    next: typeof s.next === "string" && s.next.startsWith("/") && !s.next.startsWith("//") ? s.next : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "MiProjet Go — Connexion" },
@@ -21,6 +24,11 @@ function phoneToEmail(phone: string) {
 
 function AuthPage() {
   const navigate = useNavigate();
+  const { next } = useSearch({ from: "/auth" });
+  const goNext = () => {
+    if (next) window.location.href = next;
+    else navigate({ to: "/dashboard", replace: true });
+  };
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
@@ -31,9 +39,10 @@ function AuthPage() {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate({ to: "/dashboard", replace: true });
+      if (data.session) goNext();
     });
-  }, [navigate]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function validate() {
     const cleaned = phone.replace(/\D/g, "");
@@ -86,7 +95,7 @@ function AuthPage() {
       }
       setLoading(false);
       toast.success("Compte créé. Bienvenue sur MiProjet Go !");
-      navigate({ to: "/dashboard", replace: true });
+      goNext();
       return;
     }
     const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -97,7 +106,7 @@ function AuthPage() {
       return;
     }
     toast.success("Bienvenue !");
-    navigate({ to: "/dashboard", replace: true });
+    goNext();
   }
 
   return (
