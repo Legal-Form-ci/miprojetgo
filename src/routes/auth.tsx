@@ -200,6 +200,7 @@ function AuthPage() {
                 <User className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                 <input
                   id="auth-full-name"
+                  aria-label="Ton nom complet"
                   type="text"
                   autoComplete="name"
                   placeholder="Kouamé N'Guessan"
@@ -222,6 +223,7 @@ function AuthPage() {
               <Phone className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                   <input
                     id="auth-phone"
+                    aria-label="Numéro de téléphone"
                 type="tel"
                 inputMode="numeric"
                 autoComplete="tel"
@@ -244,6 +246,7 @@ function AuthPage() {
               <Lock className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                 <input
                   id="auth-password"
+                  aria-label={mode === "signup" ? "Choisis un mot de passe" : "Mot de passe"}
                 type={showPwd ? "text" : "password"}
                 autoComplete={mode === "signup" ? "new-password" : "current-password"}
                 placeholder="••••••••"

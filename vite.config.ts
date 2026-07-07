@@ -28,11 +28,11 @@ export default defineConfig({
         "icons/favicon-32.png",
       ],
       manifest: {
-        name: "MaestraBook",
-        short_name: "MaestraBook",
-        description: "Gestion financière de la cave chez Maestra.",
-        theme_color: "#4a1322",
-        background_color: "#faf6ee",
+        name: "MiProjet Go — L'app des entrepreneurs",
+        short_name: "MiProjet Go",
+        description: "Gestion des ventes, dépenses, stocks et équipes pour commerçants, artisans et TPE.",
+        theme_color: "#003EAB",
+        background_color: "#F4F8FF",
         display: "standalone",
         orientation: "portrait",
         start_url: "/dashboard",
@@ -41,7 +41,7 @@ export default defineConfig({
         icons: [
           { src: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
           { src: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
-          { src: "/icons/icon-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
+          { src: "/icons/icon-maskable-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
         ],
       },
       workbox: {
