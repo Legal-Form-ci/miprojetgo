@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { exportHistoryCsv, exportHistoryReport } from "@/lib/export.functions";
+import { exportHistoryCsv, exportHistoryExcelRows, exportHistoryReport } from "@/lib/export.functions";
 import { ArrowDownCircle, ArrowUpCircle, Trash2, Search, Download, FileText, FileSpreadsheet, Lock, Check, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
@@ -58,6 +58,7 @@ function History() {
   const qc = useQueryClient();
   const exportHistory = useServerFn(exportHistoryCsv);
   const exportReport = useServerFn(exportHistoryReport);
+  const exportExcelRows = useServerFn(exportHistoryExcelRows);
   const [periode, setPeriode] = useState<Periode>("mois");
   const [typeFilter, setTypeFilter] = useState<"all" | "entree" | "sortie">("all");
   const [q, setQ] = useState("");
@@ -189,12 +190,16 @@ function History() {
   }
 
   async function handleExcel() {
-    if (ops.length === 0) return toast.error("Rien à exporter");
     setXlsxing(true);
     try {
-      const totIn = ops.filter((o) => o.type === "entree").reduce((s, o) => s + Number(o.montant), 0);
-      const totOut = ops.filter((o) => o.type === "sortie").reduce((s, o) => s + Number(o.montant), 0);
-      const rows = ops.map((o) => {
+      const start = startOf(periode);
+      const res = await exportExcelRows({
+        data: { startIso: start ? start.toISOString() : null, typeFilter, query: q.trim() },
+      });
+      if (res.count === 0) return toast.error("Rien à exporter");
+      const totIn = res.rows.filter((o) => o.type === "entree").reduce((s, o) => s + Number(o.montant), 0);
+      const totOut = res.rows.filter((o) => o.type === "sortie").reduce((s, o) => s + Number(o.montant), 0);
+      const rows = res.rows.map((o) => {
         const d = new Date(o.date_operation);
         return {
           Date: d.toLocaleDateString("fr-FR"),
@@ -216,8 +221,8 @@ function History() {
       ws["!cols"] = [{ wch: 12 }, { wch: 8 }, { wch: 10 }, { wch: 32 }, { wch: 14 }, { wch: 16 }, { wch: 14 }, { wch: 20 }];
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "Opérations");
-      XLSX.writeFile(wb, `miprojet-go-${new Date().toISOString().slice(0, 10)}.xlsx`);
-      toast.success(`${ops.length} ligne(s) exportée(s)`);
+      XLSX.writeFile(wb, res.filename);
+      toast.success(`${res.count} ligne(s) exportée(s)`);
     } catch (e) {
       toast.error((e as Error).message || "Export Excel impossible");
     } finally {
