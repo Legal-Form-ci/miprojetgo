@@ -1,0 +1,1 @@
+CREATE POLICY "Owner or admin select produits" ON public.produits FOR SELECT TO authenticated USING ((user_id = auth.uid()) OR private_utils.has_role(auth.uid(), 'admin'::app_role));
