@@ -35,11 +35,6 @@ export const TENANT_KINDS: Array<{ kind: TenantKind; label: string; emoji: strin
 const STORE_KEY = "mpg.tenants.v1";
 const ACTIVE_KEY = "mpg.tenant.active.v1";
 
-const SERVER_STATE: TenantState = { tenants: [defaultTenant], activeId: "default" };
-let cachedRaw: string | null = null;
-let cachedActive: string | null = null;
-let cachedState: TenantState = SERVER_STATE;
-
 type TenantState = {
   tenants: Tenant[];
   activeId: string | null;
@@ -51,6 +46,11 @@ const defaultTenant: Tenant = {
   kind: "autre",
   emoji: "💼",
 };
+
+const SERVER_STATE: TenantState = { tenants: [defaultTenant], activeId: "default" };
+let cachedRaw: string | null = null;
+let cachedActive: string | null = null;
+let cachedState: TenantState = SERVER_STATE;
 
 function read(): TenantState {
   if (typeof window === "undefined") return SERVER_STATE;
