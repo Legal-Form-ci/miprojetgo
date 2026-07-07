@@ -265,8 +265,7 @@ export type Database = {
       }
     }
     Functions: {
-      show_limit: { Args: never; Returns: number }
-      show_trgm: { Args: { "": string }; Returns: string[] }
+      [_ in never]: never
     }
     Enums: {
       app_role: "admin" | "vendeur"
