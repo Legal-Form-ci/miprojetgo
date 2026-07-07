@@ -45,24 +45,32 @@ async function extractWithAi(input: { imageDataUrl?: string; text?: string }) {
     content.push({ type: "image_url", image_url: { url: input.imageDataUrl } });
   }
 
-  const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${key}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: "google/gemini-2.5-flash",
-      response_format: { type: "json_object" },
-      messages: [{ role: "user", content }],
-    }),
-  });
-
-  if (!response.ok) throw new Error("Analyse IA impossible. Réessaie ou colle les lignes en texte.");
-  const json = await response.json();
-  const raw = json?.choices?.[0]?.message?.content;
-  const parsed = JSON.parse(typeof raw === "string" ? raw : JSON.stringify(raw));
-  return Array.isArray(parsed?.lignes) ? parsed.lignes : [];
+  const models = ["openai/gpt-5-nano", "google/gemini-2.5-flash-lite", "google/gemini-2.5-flash"];
+  for (const model of models) {
+    try {
+      const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${key}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model,
+          response_format: { type: "json_object" },
+          messages: [{ role: "user", content }],
+        }),
+      });
+      if (!response.ok) continue;
+      const json = await response.json();
+      const raw = json?.choices?.[0]?.message?.content;
+      const parsed = JSON.parse(typeof raw === "string" ? raw : JSON.stringify(raw));
+      if (Array.isArray(parsed?.lignes)) return parsed.lignes;
+    } catch {
+      /* try next model */
+    }
+  }
+  if (input.text) return parseFallbackText(input.text);
+  throw new Error("Analyse IA impossible. Réessaie ou colle les lignes en texte.");
 }
 
 export const analyzeImportLines = createServerFn({ method: "POST" })

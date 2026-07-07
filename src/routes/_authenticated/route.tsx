@@ -1,7 +1,7 @@
 import { createFileRoute, Outlet, redirect, Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
-import { LayoutDashboard, PlusCircle, History, LogOut, Users, Mic, User as UserIcon, Package } from "lucide-react";
+import { LayoutDashboard, PlusCircle, History, LogOut, Users, Mic, User as UserIcon, Package, Settings } from "lucide-react";
 import logo from "@/assets/miprojet-go-logo.png.asset.json";
 import { SyncBanner } from "@/components/sync-banner";
 import { useIdleLogout } from "@/hooks/use-idle-logout";
@@ -55,7 +55,7 @@ function AuthedLayout() {
   }
 
   const tabs: Array<{
-    to: "/dashboard" | "/operations" | "/historique" | "/import" | "/synchronisation" | "/utilisateurs" | "/voix" | "/profil" | "/produits";
+    to: "/dashboard" | "/operations" | "/historique" | "/import" | "/synchronisation" | "/utilisateurs" | "/voix" | "/profil" | "/produits" | "/parametres";
     label: string;
     icon: typeof LayoutDashboard;
     primary?: boolean;
@@ -66,7 +66,8 @@ function AuthedLayout() {
     { to: "/operations", label: "Saisir", icon: PlusCircle, primary: true },
     { to: "/produits", label: "Produits", icon: Package },
     { to: "/historique", label: "Historique", icon: History },
-    { to: "/utilisateurs", label: "Users", icon: Users, adminOnly: true },
+    { to: "/parametres", label: "Réglages", icon: Settings, adminOnly: true },
+    { to: "/utilisateurs", label: "Équipe", icon: Users, adminOnly: true },
   ];
   const visibleTabs = tabs.filter((t) => !t.adminOnly || isAdmin);
 
@@ -75,7 +76,7 @@ function AuthedLayout() {
       <header className="sticky top-0 z-30 backdrop-blur-md bg-background/90 border-b border-border shadow-[var(--shadow-soft)]">
         <div className="max-w-2xl mx-auto px-4 h-16 grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3">
           <Link to="/dashboard" className="flex items-center shrink-0">
-            <img src={logo.url} alt="MiProjet Go" className="h-9 w-auto object-contain" />
+            <img src={logo.url} alt="MiProjet Go" className="h-10 w-auto object-contain" />
             <span className="sr-only">MiProjet Go</span>
           </Link>
           {/* Sélecteur d'espace d'activité (multi-tenant UI, DB à venir) */}

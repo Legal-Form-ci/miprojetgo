@@ -134,7 +134,7 @@ function AuthPage() {
             <img
               src={logo.url}
               alt="MiProjet Go"
-              className="relative h-24 w-auto object-contain drop-shadow-xl"
+              className="relative h-32 w-auto max-w-full object-contain drop-shadow-xl"
             />
           </div>
           <p className="text-sm font-medium text-brand-earth" style={{ color: "var(--brand-earth)" }}>
@@ -199,6 +199,8 @@ function AuthPage() {
               <div className="relative">
                 <User className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                 <input
+                  id="auth-full-name"
+                  aria-label="Ton nom complet"
                   type="text"
                   autoComplete="name"
                   placeholder="Kouamé N'Guessan"
@@ -219,7 +221,9 @@ function AuthPage() {
             </label>
             <div className="relative">
               <Phone className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-              <input
+                  <input
+                    id="auth-phone"
+                    aria-label="Numéro de téléphone"
                 type="tel"
                 inputMode="numeric"
                 autoComplete="tel"
@@ -240,7 +244,9 @@ function AuthPage() {
             </label>
             <div className="relative">
               <Lock className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-              <input
+                <input
+                  id="auth-password"
+                  aria-label={mode === "signup" ? "Choisis un mot de passe" : "Mot de passe"}
                 type={showPwd ? "text" : "password"}
                 autoComplete={mode === "signup" ? "new-password" : "current-password"}
                 placeholder="••••••••"

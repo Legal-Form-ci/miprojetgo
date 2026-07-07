@@ -91,37 +91,42 @@ export const parseVoiceOperation = createServerFn({ method: "POST" })
   .inputValidator((input) => inputSchema.parse(input))
   .handler(async ({ data, context }): Promise<VoiceParsedOperation> => {
     const key = process.env.LOVABLE_API_KEY;
-    if (!key) throw new Error("Service vocal indisponible (cle IA manquante).");
+    if (!key) return fallbackVoice(data.transcript);
 
     const normalized = normalizeNumbers(data.transcript);
-
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${key}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        response_format: { type: "json_object" },
-        messages: [
-          { role: "system", content: SYSTEM_PROMPT },
-          { role: "user", content: `Phrase originale: "${data.transcript}"\nPhrase normalisee: "${normalized}"` },
-        ],
-      }),
-    });
-
-    if (response.status === 429) throw new Error("Trop de requetes vocales. Reessaie dans un instant.");
-    if (response.status === 402) throw new Error("Credits IA epuises. Recharge le projet.");
-    if (!response.ok) throw new Error("L'IA n'a pas pu analyser la phrase.");
-
-    const json = await response.json();
-    const raw = json?.choices?.[0]?.message?.content;
+    let raw: unknown;
+    const models = ["openai/gpt-5-nano", "google/gemini-2.5-flash-lite", "google/gemini-2.5-flash"];
+    for (const model of models) {
+      try {
+        const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${key}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model,
+            response_format: { type: "json_object" },
+            messages: [
+              { role: "system", content: SYSTEM_PROMPT },
+              { role: "user", content: `Phrase originale: "${data.transcript}"\nPhrase normalisee: "${normalized}"` },
+            ],
+          }),
+        });
+        if (!response.ok) continue;
+        const json = await response.json();
+        raw = json?.choices?.[0]?.message?.content;
+        if (raw) break;
+      } catch {
+        /* try next model */
+      }
+    }
+    if (!raw) return fallbackVoice(data.transcript);
     let parsed: Record<string, unknown>;
     try {
       parsed = JSON.parse(typeof raw === "string" ? raw : JSON.stringify(raw));
     } catch {
-      throw new Error("Reponse IA illisible. Reformule la phrase.");
+      return fallbackVoice(data.transcript);
     }
 
     const type = parsed.type === "sortie" ? "sortie" : "entree";
@@ -172,6 +177,24 @@ export const parseVoiceOperation = createServerFn({ method: "POST" })
       price_source,
     };
   });
+
+function fallbackVoice(transcript: string): VoiceParsedOperation {
+  const normalized = normalizeNumbers(transcript);
+  const nums = normalized.match(/\d+(?:[.,]\d+)?/g)?.map((n) => Number(n.replace(",", "."))).filter((n) => n > 0) ?? [];
+  const type = /achat|achete|acheté|depense|dépense|sortie|fournisseur|carburant/i.test(transcript) ? "sortie" : "entree";
+  return {
+    type,
+    montant: nums.length ? Math.round(Math.max(...nums)) : 0,
+    description: dedupeDescription(transcript.slice(0, 80)) || "Operation vocale",
+    categorie: "Divers",
+    mode_paiement: "Especes",
+    note: null,
+    confidence: "faible",
+    raison: "Analyse simplifiee utilisee. Verifie le montant et la description avant validation.",
+    lang: "fr",
+    price_source: nums.length ? "manuel" : "manuel",
+  };
+}
 
 type SbQuery = {
   select: (cols: string) => SbQuery;

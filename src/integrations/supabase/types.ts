@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      activity_settings: {
+        Row: {
+          activity_name: string
+          activity_type: string
+          address: string | null
+          city: string | null
+          created_at: string
+          description: string | null
+          id: string
+          owner_name: string | null
+          phone: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          activity_name?: string
+          activity_type?: string
+          address?: string | null
+          city?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          owner_name?: string | null
+          phone?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          activity_name?: string
+          activity_type?: string
+          address?: string | null
+          city?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          owner_name?: string | null
+          phone?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       export_audit_logs: {
         Row: {
           admin_phone: string | null
@@ -223,8 +265,7 @@ export type Database = {
       }
     }
     Functions: {
-      show_limit: { Args: never; Returns: number }
-      show_trgm: { Args: { "": string }; Returns: string[] }
+      [_ in never]: never
     }
     Enums: {
       app_role: "admin" | "vendeur"

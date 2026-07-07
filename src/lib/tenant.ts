@@ -47,15 +47,29 @@ const defaultTenant: Tenant = {
   emoji: "💼",
 };
 
+const SERVER_STATE: TenantState = { tenants: [defaultTenant], activeId: "default" };
+let cachedRaw: string | null = null;
+let cachedActive: string | null = null;
+let cachedState: TenantState = SERVER_STATE;
+
 function read(): TenantState {
-  if (typeof window === "undefined") return { tenants: [defaultTenant], activeId: "default" };
+  if (typeof window === "undefined") return SERVER_STATE;
   try {
     const raw = window.localStorage.getItem(STORE_KEY);
+    const activeRaw = window.localStorage.getItem(ACTIVE_KEY);
+    if (raw === cachedRaw && activeRaw === cachedActive) return cachedState;
     const tenants: Tenant[] = raw ? JSON.parse(raw) : [defaultTenant];
-    const activeId = window.localStorage.getItem(ACTIVE_KEY) || tenants[0]?.id || null;
-    return { tenants: tenants.length ? tenants : [defaultTenant], activeId };
+    const safeTenants = tenants.length ? tenants : [defaultTenant];
+    const activeId = activeRaw || safeTenants[0]?.id || null;
+    cachedRaw = raw;
+    cachedActive = activeRaw;
+    cachedState = { tenants: safeTenants, activeId };
+    return cachedState;
   } catch {
-    return { tenants: [defaultTenant], activeId: "default" };
+    cachedRaw = null;
+    cachedActive = null;
+    cachedState = SERVER_STATE;
+    return SERVER_STATE;
   }
 }
 
@@ -80,7 +94,7 @@ function getSnapshot(): TenantState {
   return read();
 }
 function getServerSnapshot(): TenantState {
-  return { tenants: [defaultTenant], activeId: "default" };
+  return SERVER_STATE;
 }
 
 export function useTenants() {
