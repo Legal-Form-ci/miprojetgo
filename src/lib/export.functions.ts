@@ -245,34 +245,34 @@ export const exportHistoryReport = createServerFn({ method: "POST" })
 <title>Rapport financier MiProjet Go</title>
 <style>
   *{box-sizing:border-box}
-  body{font-family:'Helvetica Neue',Arial,sans-serif;color:#1a1a1a;background:#f5f3ef;margin:0;padding:32px}
+  body{font-family:'Helvetica Neue',Arial,sans-serif;color:#172554;background:#f4f8ff;margin:0;padding:32px}
   .page{max-width:900px;margin:0 auto;background:#fff;padding:48px;box-shadow:0 4px 24px rgba(0,0,0,.06);border-radius:8px}
-  .cover{border-bottom:3px solid #6b1e3a;padding-bottom:24px;margin-bottom:32px;display:flex;justify-content:space-between;align-items:flex-end;gap:24px}
-  .brand h1{font-size:28px;color:#6b1e3a;margin:0 0 4px;letter-spacing:.5px}
-  .brand p{margin:0;color:#6b6b6b;font-size:13px}
+  .cover{border-bottom:3px solid #003eab;padding-bottom:24px;margin-bottom:32px;display:flex;justify-content:space-between;align-items:flex-end;gap:24px}
+  .brand h1{font-size:28px;color:#003eab;margin:0 0 4px;letter-spacing:.5px}
+  .brand p{margin:0;color:#475569;font-size:13px}
   .meta{text-align:right;font-size:12px;color:#444;line-height:1.6}
-  .meta b{color:#6b1e3a}
+  .meta b{color:#003eab}
   .summary{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:40px}
-  .card{padding:20px;border-radius:10px;background:linear-gradient(135deg,#fdf8f3,#f5ebe0);border:1px solid #e8d9c5}
-  .card span{display:block;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#8b6f47;font-weight:600}
+  .card{padding:20px;border-radius:10px;background:linear-gradient(135deg,#f8fbff,#eef6ff);border:1px solid #bfdbfe}
+  .card span{display:block;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#1d4ed8;font-weight:600}
   .card b{display:block;font-size:22px;font-weight:700;margin-top:8px}
   .card.in b{color:#15803d}
   .card.out b{color:#b91c1c}
-  .card.bal b{color:#6b1e3a}
+  .card.bal b{color:#003eab}
   .month{margin-bottom:36px;page-break-inside:avoid}
-  .mh{display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #d4a373;padding-bottom:8px;margin-bottom:12px}
-  .mh h2{font-size:18px;margin:0;color:#6b1e3a;text-transform:capitalize}
+  .mh{display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #17a321;padding-bottom:8px;margin-bottom:12px}
+  .mh h2{font-size:18px;margin:0;color:#003eab;text-transform:capitalize}
   .kpi{display:flex;gap:18px;font-size:12px}
   .kpi div{text-align:right}
   .kpi span{display:block;color:#666;text-transform:uppercase;font-size:10px;letter-spacing:.5px}
   .kpi b{font-size:14px}
   table{width:100%;border-collapse:collapse;font-size:12px}
-  th{text-align:left;padding:8px 6px;background:#f5ebe0;color:#6b1e3a;font-weight:600;border-bottom:1px solid #d4a373}
+  th{text-align:left;padding:8px 6px;background:#eef6ff;color:#003eab;font-weight:600;border-bottom:1px solid #bfdbfe}
   td{padding:8px 6px;border-bottom:1px solid #eee;vertical-align:top}
   td .t{color:#888;font-size:10px}
   .num{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
   .g{color:#15803d}.r{color:#b91c1c}
-  .total-global{margin-top:40px;padding:24px;border-radius:12px;background:linear-gradient(135deg,#6b1e3a,#8b2647);color:#fff;page-break-inside:avoid}
+  .total-global{margin-top:40px;padding:24px;border-radius:12px;background:linear-gradient(135deg,#003eab,#0053d6);color:#fff;page-break-inside:avoid}
   .total-global h2{margin:0 0 16px;font-size:18px;color:#fff}
   .total-global .tg{color:#fff}
   .total-global .tg td{border-bottom:1px solid rgba(255,255,255,.15);padding:10px 6px;font-size:14px}
@@ -323,5 +323,57 @@ export const exportHistoryReport = createServerFn({ method: "POST" })
       html,
       count: ops.length,
       totals: { entree: totEntree, sortie: totSortie, benefice },
+    };
+  });
+
+export const exportHistoryExcelRows = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => exportSchema.parse(input))
+  .handler(async ({ data, context }) => {
+    const { data: adminRole } = await context.supabase
+      .from("user_roles").select("role").eq("user_id", context.userId).eq("role", "admin").maybeSingle();
+    if (!adminRole) throw new Error("Export reserve a l'admin.");
+    await assertExportEntitlement(context);
+
+    let request = context.supabase
+      .from("operations")
+      .select("type, montant, description, categorie, mode_paiement, date_operation, note")
+      .order("date_operation", { ascending: false })
+      .limit(10000);
+    if (data.startIso) request = request.gte("date_operation", data.startIso);
+    if (data.typeFilter !== "all") request = request.eq("type", data.typeFilter);
+    const { data: rows, error } = await request;
+    if (error) throw new Error("Export Excel indisponible.");
+
+    const needle = data.query.toLowerCase();
+    const ops = ((rows ?? []) as ExportOperation[]).filter((op) =>
+      !needle || [op.description, op.categorie, op.mode_paiement].some((v) => v.toLowerCase().includes(needle))
+    );
+
+    const { data: profile } = await context.supabase
+      .from("profiles").select("phone").eq("id", context.userId).maybeSingle();
+    await (context.supabase as unknown as {
+      from: (t: string) => { insert: (row: Record<string, unknown>) => Promise<{ error: unknown }> };
+    }).from("export_audit_logs").insert({
+      admin_user_id: context.userId,
+      admin_phone: (profile as { phone?: string } | null)?.phone ?? null,
+      periode_start: data.startIso,
+      type_filter: data.typeFilter,
+      query_text: data.query || null,
+      rows_count: ops.length,
+    });
+
+    return {
+      filename: `miprojet-go-${new Date().toISOString().slice(0, 10)}.xlsx`,
+      count: ops.length,
+      rows: ops.map((o) => ({
+        date_operation: o.date_operation,
+        type: o.type,
+        description: o.description,
+        categorie: o.categorie,
+        mode_paiement: o.mode_paiement,
+        montant: Number(o.montant),
+        note: o.note,
+      })),
     };
   });
