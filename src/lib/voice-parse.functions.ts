@@ -95,7 +95,14 @@ export const parseVoiceOperation = createServerFn({ method: "POST" })
 
     const normalized = normalizeNumbers(data.transcript);
     let raw: unknown;
-    const models = ["openai/gpt-5-nano", "google/gemini-2.5-flash-lite", "google/gemini-2.5-flash"];
+    // Fallback : GPT d'abord (Claude indisponible sur Lovable AI Gateway),
+    // Gemini seulement si les modèles OpenAI échouent.
+    const models = [
+      "openai/gpt-5-nano",
+      "openai/gpt-5-mini",
+      "google/gemini-2.5-flash-lite",
+      "google/gemini-2.5-flash",
+    ];
     for (const model of models) {
       try {
         const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
