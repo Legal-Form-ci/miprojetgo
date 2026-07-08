@@ -57,13 +57,16 @@ export function BalanceCard({
   return (
     <section className="space-y-3">
       <div
-        className="relative overflow-hidden rounded-[1.5rem] p-5 sm:p-6"
+        className="relative overflow-hidden rounded-2xl p-3.5 mx-auto"
         style={{
           background: tier.gradient,
           boxShadow: tier.shadow,
           color: tier.textColor,
           aspectRatio: "1.586 / 1",
-          maxWidth: "100%",
+          // Taille carte Visa réelle : 85.6mm × 53.98mm.
+          // S'adapte à l'écran, plafonné à la taille réelle sur grand écran.
+          width: "min(100%, 85.6mm)",
+          maxWidth: "85.6mm",
         }}
       >
         {/* shimmer */}
@@ -77,50 +80,50 @@ export function BalanceCard({
         />
         {/* chip */}
         <div
-          className="absolute top-4 right-4 sm:top-5 sm:right-6 h-7 w-9 sm:h-8 sm:w-11 rounded-md"
+          className="absolute top-3 right-3 h-5 w-7 rounded-[3px]"
           style={{
             background: "linear-gradient(135deg, #d4af37 0%, #f5d06f 50%, #a87b1b 100%)",
             boxShadow: "inset 0 0 0 1px rgba(0,0,0,0.15)",
           }}
         />
 
-        <div className="relative flex items-start justify-between gap-3">
-          <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.25em] font-semibold opacity-80">
-            <Wallet className="w-3.5 h-3.5" />
+        <div className="relative flex items-start justify-between gap-2">
+          <div className="flex items-center gap-1.5 text-[8px] uppercase tracking-[0.2em] font-semibold opacity-80">
+            <Wallet className="w-3 h-3" />
             {isAdmin ? "Solde global" : "Solde personnel"}
           </div>
         </div>
 
-        <div className="relative mt-3 sm:mt-4">
-          <div className="font-display text-3xl sm:text-4xl font-black tabular-nums tracking-tight">
+        <div className="relative mt-1.5">
+          <div className="font-display text-lg font-black tabular-nums tracking-tight leading-none">
             {fmt(solde)}
           </div>
-          <div className="text-[10px] sm:text-xs uppercase tracking-widest mt-1 opacity-80 font-semibold">
+          <div className="text-[8px] uppercase tracking-widest mt-0.5 opacity-80 font-semibold">
             {tier.label}
           </div>
         </div>
 
-        <div className="relative mt-4 sm:mt-5 font-mono text-[13px] sm:text-base tracking-[0.18em] opacity-90">
+        <div className="relative mt-2 font-mono text-[10px] tracking-[0.15em] opacity-90">
           {maskNumber(phone)}
         </div>
 
-        <div className="relative mt-3 sm:mt-4 flex items-end justify-between gap-3 min-w-0">
-          <div className="min-w-0 flex items-center gap-2.5">
+        <div className="relative mt-1.5 flex items-end justify-between gap-2 min-w-0">
+          <div className="min-w-0 flex items-center gap-1.5">
             <span
-              className="relative shrink-0 w-9 h-9 sm:w-10 sm:h-10 rounded-full overflow-hidden flex items-center justify-center"
+              className="relative shrink-0 w-6 h-6 rounded-full overflow-hidden flex items-center justify-center"
               style={{ background: tier.accent }}
             >
               {avatarUrl ? (
                 <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
               ) : (
-                <User className="w-5 h-5 opacity-70" />
+                <User className="w-3.5 h-3.5 opacity-70" />
               )}
             </span>
             <div className="min-w-0">
-              <div className="text-[8px] sm:text-[9px] uppercase tracking-widest opacity-75 leading-tight">
+              <div className="text-[7px] uppercase tracking-widest opacity-75 leading-tight">
                 Titulaire
               </div>
-              <div className="text-xs sm:text-sm font-bold uppercase tracking-wider truncate">
+              <div className="text-[10px] font-bold uppercase tracking-wider truncate">
                 {displayName}
               </div>
             </div>
@@ -131,7 +134,7 @@ export function BalanceCard({
             width={64}
             height={64}
             loading="lazy"
-            className="shrink-0 h-8 sm:h-10 w-auto object-contain drop-shadow-[0_2px_4px_rgba(0,0,0,0.35)]"
+            className="shrink-0 h-5 w-auto object-contain drop-shadow-[0_2px_4px_rgba(0,0,0,0.35)]"
           />
         </div>
       </div>

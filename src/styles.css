@@ -72,12 +72,12 @@
   --card-foreground: oklch(0.22 0.05 255);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.22 0.05 255);
-  /* Bleu MiProjet */
-  --primary: oklch(0.42 0.18 262);
+  /* Vert MiProjet Go — couleur dominante */
+  --primary: oklch(0.55 0.18 148);
   --primary-foreground: oklch(0.99 0.005 240);
-  /* Vert Go */
-  --secondary: oklch(0.95 0.02 150);
-  --secondary-foreground: oklch(0.30 0.14 150);
+  /* Bleu MiProjet — accent secondaire */
+  --secondary: oklch(0.94 0.03 258);
+  --secondary-foreground: oklch(0.32 0.16 262);
   --muted: oklch(0.96 0.008 240);
   --muted-foreground: oklch(0.48 0.04 250);
   --accent: oklch(0.94 0.05 155);
@@ -86,7 +86,7 @@
   --destructive-foreground: oklch(0.99 0.005 240);
   --border: oklch(0.90 0.012 240);
   --input: oklch(0.94 0.01 240);
-  --ring: oklch(0.55 0.18 260);
+  --ring: oklch(0.55 0.18 148);
   /* Marque MiProjet Go */
   --brand-blue: oklch(0.42 0.18 262);
   --brand-blue-foreground: oklch(0.99 0.005 240);
@@ -103,23 +103,23 @@
   --chart-3: oklch(0.50 0.11 60);
   --chart-4: oklch(0.72 0.15 75);
   --chart-5: oklch(0.55 0.18 25);
-  --sidebar: oklch(0.30 0.16 262);
+  --sidebar: oklch(0.28 0.12 150);
   --sidebar-foreground: oklch(0.99 0.005 240);
-  --sidebar-primary: oklch(0.62 0.19 148);
+  --sidebar-primary: oklch(0.68 0.18 158);
   --sidebar-primary-foreground: oklch(0.99 0.005 240);
-  --sidebar-accent: oklch(0.38 0.17 262);
+  --sidebar-accent: oklch(0.36 0.13 150);
   --sidebar-accent-foreground: oklch(0.99 0.005 240);
-  --sidebar-border: oklch(0.38 0.17 262);
-  --sidebar-ring: oklch(0.62 0.19 148);
+  --sidebar-border: oklch(0.36 0.13 150);
+  --sidebar-ring: oklch(0.68 0.18 158);
 
-  --gradient-primary: linear-gradient(135deg, oklch(0.42 0.18 262), oklch(0.52 0.20 258));
-  --gradient-brand: linear-gradient(120deg, oklch(0.42 0.18 262) 0%, oklch(0.48 0.19 220) 50%, oklch(0.62 0.19 148) 100%);
-  --gradient-green: linear-gradient(135deg, oklch(0.62 0.19 148), oklch(0.68 0.18 158));
+  --gradient-primary: linear-gradient(135deg, oklch(0.55 0.18 148), oklch(0.68 0.18 158));
+  --gradient-brand: linear-gradient(120deg, oklch(0.55 0.18 148) 0%, oklch(0.60 0.17 175) 55%, oklch(0.42 0.18 262) 100%);
+  --gradient-green: linear-gradient(135deg, oklch(0.55 0.18 148), oklch(0.68 0.18 158));
   --gradient-earth: linear-gradient(135deg, oklch(0.50 0.11 60), oklch(0.58 0.13 65));
-  --gradient-hero: radial-gradient(ellipse at top, oklch(0.48 0.20 258) 0%, oklch(0.28 0.15 262) 100%);
-  --shadow-elegant: 0 20px 50px -18px oklch(0.42 0.18 262 / 0.35);
-  --shadow-card: 0 2px 10px -2px oklch(0.30 0.12 262 / 0.10);
-  --shadow-soft: 0 1px 3px oklch(0.30 0.12 262 / 0.06), 0 4px 12px -4px oklch(0.30 0.12 262 / 0.08);
+  --gradient-hero: radial-gradient(ellipse at top, oklch(0.60 0.19 150) 0%, oklch(0.30 0.14 155) 100%);
+  --shadow-elegant: 0 20px 50px -18px oklch(0.45 0.16 148 / 0.35);
+  --shadow-card: 0 2px 10px -2px oklch(0.30 0.12 150 / 0.10);
+  --shadow-soft: 0 1px 3px oklch(0.30 0.12 150 / 0.06), 0 4px 12px -4px oklch(0.30 0.12 150 / 0.08);
 }
 
 .dark {
@@ -129,7 +129,7 @@
   --card-foreground: oklch(0.96 0.01 240);
   --popover: oklch(0.24 0.06 260);
   --popover-foreground: oklch(0.96 0.01 240);
-  --primary: oklch(0.68 0.18 260);
+  --primary: oklch(0.72 0.19 150);
   --primary-foreground: oklch(0.18 0.04 258);
   --secondary: oklch(0.30 0.08 258);
   --secondary-foreground: oklch(0.96 0.01 240);
@@ -141,7 +141,7 @@
   --destructive-foreground: oklch(0.99 0.005 240);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 12%);
-  --ring: oklch(0.68 0.18 260);
+  --ring: oklch(0.72 0.19 150);
   --brand-blue: oklch(0.68 0.18 260);
   --brand-green: oklch(0.72 0.19 150);
   --brand-earth: oklch(0.62 0.13 65);
