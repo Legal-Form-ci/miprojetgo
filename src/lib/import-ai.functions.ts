@@ -45,7 +45,14 @@ async function extractWithAi(input: { imageDataUrl?: string; text?: string }) {
     content.push({ type: "image_url", image_url: { url: input.imageDataUrl } });
   }
 
-  const models = ["openai/gpt-5-nano", "google/gemini-2.5-flash-lite", "google/gemini-2.5-flash"];
+  // Fallback : GPT en premier (Claude indisponible sur Lovable AI Gateway),
+  // puis Gemini uniquement si les modèles OpenAI échouent.
+  const models = [
+    "openai/gpt-5-nano",
+    "openai/gpt-5-mini",
+    "google/gemini-2.5-flash-lite",
+    "google/gemini-2.5-flash",
+  ];
   for (const model of models) {
     try {
       const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
