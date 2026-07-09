@@ -53,8 +53,8 @@ function ProduitsPage() {
         categorie: p.categorie || "Divers",
         unite: p.unite?.trim() || null,
         actif: p.actif ?? true,
-        stock_actuel: p.stock_actuel != null ? Number(p.stock_actuel) : null,
-        seuil_alerte: p.seuil_alerte != null ? Number(p.seuil_alerte) : null,
+        stock_actuel: p.stock_actuel != null ? Number(p.stock_actuel) : undefined,
+        seuil_alerte: p.seuil_alerte != null ? Number(p.seuil_alerte) : undefined,
         stock_actif: p.stock_actif ?? false,
       };
       if (p.id) {
