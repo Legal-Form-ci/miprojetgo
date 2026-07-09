@@ -1,9 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { Plus, Pencil, Trash2, Package, Loader2, Save, X } from "lucide-react";
+import { Plus, Pencil, Trash2, Package, Loader2, Save, X, AlertTriangle, FileSpreadsheet, Download } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import * as XLSX from "xlsx";
 
 export const Route = createFileRoute("/_authenticated/produits")({
   head: () => ({ meta: [{ title: "Mes produits — MiProjet Go" }] }),
@@ -17,6 +18,9 @@ type Produit = {
   categorie: string;
   unite: string | null;
   actif: boolean;
+  stock_actuel?: number | null;
+  seuil_alerte?: number | null;
+  stock_actif?: boolean | null;
 };
 
 const CATS = ["Boissons", "Restauration", "Viandes", "Poissons", "Legumes", "Condiments", "Alimentation", "Carburant", "Divers", "Autre"];
@@ -30,7 +34,7 @@ function ProduitsPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("produits")
-        .select("id, nom, prix_unitaire, categorie, unite, actif")
+        .select("id, nom, prix_unitaire, categorie, unite, actif, stock_actuel, seuil_alerte, stock_actif")
         .order("nom");
       if (error) throw error;
       return (data ?? []) as Produit[];
@@ -42,13 +46,16 @@ function ProduitsPage() {
       const { data: u } = await supabase.auth.getUser();
       if (!u.user) throw new Error("Non connecté");
       if (!p.nom?.trim()) throw new Error("Nom requis");
-      const payload = {
+      const payload: Record<string, unknown> = {
         user_id: u.user.id,
         nom: p.nom.trim(),
         prix_unitaire: Number(p.prix_unitaire) || 0,
         categorie: p.categorie || "Divers",
         unite: p.unite?.trim() || null,
         actif: p.actif ?? true,
+        stock_actuel: p.stock_actuel != null ? Number(p.stock_actuel) : null,
+        seuil_alerte: p.seuil_alerte != null ? Number(p.seuil_alerte) : null,
+        stock_actif: p.stock_actif ?? false,
       };
       if (p.id) {
         const { error } = await supabase.from("produits").update(payload).eq("id", p.id);
@@ -75,6 +82,40 @@ function ProduitsPage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  function csvCell(v: string | number | null | undefined) {
+    const s = String(v ?? "");
+    return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  }
+  function exportCSV() {
+    const header = ["Nom", "Categorie", "Prix unitaire", "Unite", "Stock actuel", "Seuil alerte", "Actif"];
+    const body = produits.map((p) => [
+      p.nom, p.categorie, p.prix_unitaire, p.unite ?? "",
+      p.stock_actuel ?? "", p.seuil_alerte ?? "", p.actif ? "oui" : "non",
+    ]);
+    const csv = [header, ...body].map((row) => row.map(csvCell).join(",")).join("\n");
+    const blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `produits-miprojet-go-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success(`${produits.length} produits exportés`);
+  }
+  function exportXLSX() {
+    const rows = produits.map((p) => ({
+      Nom: p.nom, Categorie: p.categorie,
+      "Prix unitaire": p.prix_unitaire, Unite: p.unite ?? "",
+      "Stock actuel": p.stock_actuel ?? "", "Seuil alerte": p.seuil_alerte ?? "",
+      Actif: p.actif ? "oui" : "non",
+    }));
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Produits");
+    XLSX.writeFile(wb, `produits-miprojet-go-${new Date().toISOString().slice(0, 10)}.xlsx`);
+    toast.success(`${produits.length} produits exportés`);
+  }
+
   return (
     <div className="space-y-4">
       <header className="flex items-center justify-between gap-3">
@@ -87,13 +128,25 @@ function ProduitsPage() {
             <p className="text-xs text-muted-foreground">{produits.length} référence(s)</p>
           </div>
         </div>
-        <button
-          onClick={() => setEditing({ nom: "", prix_unitaire: 0, categorie: "Boissons", actif: true })}
-          className="inline-flex items-center gap-1.5 h-10 px-3 rounded-xl text-primary-foreground text-sm font-semibold"
-          style={{ background: "var(--gradient-primary)" }}
-        >
-          <Plus className="w-4 h-4" /> Nouveau
-        </button>
+        <div className="flex items-center gap-2">
+          {produits.length > 0 && (
+            <>
+              <button onClick={exportCSV} title="Export CSV" className="h-10 px-3 rounded-xl border border-border bg-card text-sm font-semibold inline-flex items-center gap-1.5">
+                <Download className="w-4 h-4" /> CSV
+              </button>
+              <button onClick={exportXLSX} title="Export Excel" className="h-10 px-3 rounded-xl border border-border bg-card text-sm font-semibold inline-flex items-center gap-1.5">
+                <FileSpreadsheet className="w-4 h-4" /> Excel
+              </button>
+            </>
+          )}
+          <button
+            onClick={() => setEditing({ nom: "", prix_unitaire: 0, categorie: "Boissons", actif: true, stock_actif: false })}
+            className="inline-flex items-center gap-1.5 h-10 px-3 rounded-xl text-primary-foreground text-sm font-semibold"
+            style={{ background: "var(--gradient-primary)" }}
+          >
+            <Plus className="w-4 h-4" /> Nouveau
+          </button>
+        </div>
       </header>
 
       {editing && (
@@ -130,6 +183,32 @@ function ProduitsPage() {
           >
             {CATS.map((c) => <option key={c}>{c}</option>)}
           </select>
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={editing.stock_actif ?? false}
+              onChange={(e) => setEditing({ ...editing, stock_actif: e.target.checked })}
+            />
+            Gérer le stock de ce produit
+          </label>
+          {editing.stock_actif && (
+            <div className="grid grid-cols-2 gap-2">
+              <input
+                type="number"
+                placeholder="Stock actuel"
+                value={editing.stock_actuel ?? ""}
+                onChange={(e) => setEditing({ ...editing, stock_actuel: e.target.value === "" ? null : Number(e.target.value) })}
+                className="h-11 px-3 rounded-xl bg-background border border-border focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+              <input
+                type="number"
+                placeholder="Seuil d'alerte"
+                value={editing.seuil_alerte ?? ""}
+                onChange={(e) => setEditing({ ...editing, seuil_alerte: e.target.value === "" ? null : Number(e.target.value) })}
+                className="h-11 px-3 rounded-xl bg-background border border-border focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
+          )}
           <button
             onClick={() => save.mutate(editing)}
             disabled={save.isPending}
@@ -150,11 +229,24 @@ function ProduitsPage() {
         </p>
       ) : (
         <ul className="space-y-2">
-          {produits.map((p) => (
-            <li key={p.id} className="bg-card rounded-2xl px-4 py-3 border border-border flex items-center gap-3">
+          {produits.map((p) => {
+            const stockManaged = p.stock_actif && p.stock_actuel != null;
+            const lowStock = stockManaged && p.seuil_alerte != null && Number(p.stock_actuel) <= Number(p.seuil_alerte);
+            return (
+            <li key={p.id} className={`bg-card rounded-2xl px-4 py-3 border flex items-center gap-3 ${lowStock ? "border-destructive/40" : "border-border"}`}>
               <div className="flex-1 min-w-0">
-                <div className="text-sm font-semibold truncate">{p.nom}</div>
-                <div className="text-[11px] text-muted-foreground">{p.categorie}{p.unite ? ` · ${p.unite}` : ""}</div>
+                <div className="text-sm font-semibold truncate flex items-center gap-1.5">
+                  {p.nom}
+                  {lowStock && (
+                    <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-destructive bg-destructive/10 px-1.5 py-0.5 rounded-full">
+                      <AlertTriangle className="w-3 h-3" /> Stock bas
+                    </span>
+                  )}
+                </div>
+                <div className="text-[11px] text-muted-foreground">
+                  {p.categorie}{p.unite ? ` · ${p.unite}` : ""}
+                  {stockManaged && ` · Stock : ${p.stock_actuel}${p.unite ? " " + p.unite : ""}`}
+                </div>
               </div>
               <div className="text-sm font-semibold tabular-nums text-primary">
                 {new Intl.NumberFormat("fr-FR").format(p.prix_unitaire)} F
@@ -169,7 +261,8 @@ function ProduitsPage() {
                 <Trash2 className="w-4 h-4" />
               </button>
             </li>
-          ))}
+            );
+          })}
         </ul>
       )}
     </div>
