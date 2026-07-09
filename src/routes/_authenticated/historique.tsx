@@ -4,7 +4,8 @@ import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { exportHistoryCsv, exportHistoryExcelRows, exportHistoryReport } from "@/lib/export.functions";
-import { ArrowDownCircle, ArrowUpCircle, Trash2, Search, Download, FileText, FileSpreadsheet, Lock, Check, Sparkles } from "lucide-react";
+import { ArrowDownCircle, ArrowUpCircle, Trash2, Search, Download, FileText, FileSpreadsheet, Lock, Check, Sparkles, Receipt } from "lucide-react";
+import { openReceipt } from "@/lib/receipt";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
 import { useExportUnlocked, useUnlockExports, EXPORT_PLANS } from "@/lib/export-lock";
@@ -450,6 +451,23 @@ function History() {
                 <div className={`font-semibold tabular-nums text-sm ${isIn ? "text-[var(--success)]" : "text-destructive"}`}>
                   {isIn ? "+" : "−"} {fmt(Number(o.montant))}
                 </div>
+                <button
+                  onClick={() => openReceipt({
+                    id: o.id,
+                    type: o.type,
+                    montant: Number(o.montant),
+                    description: o.description,
+                    categorie: o.categorie,
+                    mode_paiement: o.mode_paiement,
+                    date_operation: o.date_operation,
+                    note: o.note,
+                  })}
+                  className="w-8 h-8 rounded-full text-muted-foreground hover:text-primary hover:bg-primary/10 flex items-center justify-center"
+                  aria-label="Reçu PDF"
+                  title="Reçu PDF"
+                >
+                  <Receipt className="w-4 h-4" />
+                </button>
                 <button
                   onClick={() => {
                     if (confirm("Supprimer cette opération ?")) del.mutate(o.id);
