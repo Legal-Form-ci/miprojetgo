@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { ArrowDownCircle, ArrowUpCircle, Wallet, User } from "lucide-react";
 import { getTier, periodeStart, PERIODE_LABEL, type Periode } from "@/lib/tier";
 import { avatarSignedUrl } from "@/lib/avatar";
-import mark from "@/assets/miprojet-go-mark.png.asset.json";
+import { LOGO_MARK_URL } from "@/lib/brand";
 
 type Op = { type: "entree" | "sortie"; montant: number; date_operation: string };
 
@@ -57,16 +57,15 @@ export function BalanceCard({
   return (
     <section className="space-y-3">
       <div
-        className="relative overflow-hidden rounded-2xl p-3.5 mx-auto"
+        className="relative overflow-hidden rounded-2xl p-4 mx-auto"
         style={{
           background: tier.gradient,
           boxShadow: tier.shadow,
           color: tier.textColor,
           aspectRatio: "1.586 / 1",
-          // Taille carte Visa réelle : 85.6mm × 53.98mm.
-          // S'adapte à l'écran, plafonné à la taille réelle sur grand écran.
-          width: "min(100%, 85.6mm)",
-          maxWidth: "85.6mm",
+          // Carte Visa légèrement agrandie pour lisibilité mobile.
+          width: "min(100%, 380px)",
+          maxWidth: "380px",
         }}
       >
         {/* shimmer */}
@@ -80,7 +79,7 @@ export function BalanceCard({
         />
         {/* chip */}
         <div
-          className="absolute top-3 right-3 h-5 w-7 rounded-[3px]"
+          className="absolute top-3 right-3 h-6 w-8 rounded-[3px]"
           style={{
             background: "linear-gradient(135deg, #d4af37 0%, #f5d06f 50%, #a87b1b 100%)",
             boxShadow: "inset 0 0 0 1px rgba(0,0,0,0.15)",
@@ -88,54 +87,56 @@ export function BalanceCard({
         />
 
         <div className="relative flex items-start justify-between gap-2">
-          <div className="flex items-center gap-1.5 text-[8px] uppercase tracking-[0.2em] font-semibold opacity-80">
-            <Wallet className="w-3 h-3" />
+          <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-[0.2em] font-semibold opacity-90">
+            <Wallet className="w-3.5 h-3.5" />
             {isAdmin ? "Solde global" : "Solde personnel"}
           </div>
         </div>
 
-        <div className="relative mt-1.5">
-          <div className="font-display text-lg font-black tabular-nums tracking-tight leading-none">
+        <div className="relative mt-2">
+          <div className="font-display text-2xl font-black tabular-nums tracking-tight leading-none">
             {fmt(solde)}
           </div>
-          <div className="text-[8px] uppercase tracking-widest mt-0.5 opacity-80 font-semibold">
+          <div className="text-[10px] uppercase tracking-widest mt-1 opacity-85 font-semibold">
             {tier.label}
           </div>
         </div>
 
-        <div className="relative mt-2 font-mono text-[10px] tracking-[0.15em] opacity-90">
+        <div className="relative mt-2.5 font-mono text-[12px] tracking-[0.18em] opacity-95">
           {maskNumber(phone)}
         </div>
 
-        <div className="relative mt-1.5 flex items-end justify-between gap-2 min-w-0">
-          <div className="min-w-0 flex items-center gap-1.5">
+        <div className="relative mt-2 flex items-end justify-between gap-2 min-w-0">
+          <div className="min-w-0 flex items-center gap-2">
             <span
-              className="relative shrink-0 w-6 h-6 rounded-full overflow-hidden flex items-center justify-center"
+              className="relative shrink-0 w-8 h-8 rounded-full overflow-hidden flex items-center justify-center"
               style={{ background: tier.accent }}
             >
               {avatarUrl ? (
                 <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
               ) : (
-                <User className="w-3.5 h-3.5 opacity-70" />
+                <User className="w-4 h-4 opacity-70" />
               )}
             </span>
             <div className="min-w-0">
-              <div className="text-[7px] uppercase tracking-widest opacity-75 leading-tight">
+              <div className="text-[9px] uppercase tracking-widest opacity-80 leading-tight">
                 Titulaire
               </div>
-              <div className="text-[10px] font-bold uppercase tracking-wider truncate">
+              <div className="text-[12px] font-bold uppercase tracking-wider truncate">
                 {displayName}
               </div>
             </div>
           </div>
-          <img
-            src={mark.url}
-            alt="MiProjet Go"
-            width={64}
-            height={64}
-            loading="lazy"
-            className="shrink-0 h-5 w-auto object-contain drop-shadow-[0_2px_4px_rgba(0,0,0,0.35)]"
-          />
+          <div className="shrink-0 rounded-md bg-white/95 px-1.5 py-1 flex items-center">
+            <img
+              src={LOGO_MARK_URL}
+              alt="MiProjet Go"
+              width={120}
+              height={48}
+              loading="lazy"
+              className="h-6 w-auto object-contain"
+            />
+          </div>
         </div>
       </div>
 

@@ -1,7 +1,7 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import logo from "@/assets/miprojet-go-logo.png.asset.json";
+import { LOGO_URL } from "@/lib/brand";
 
 type OAuthNS = {
   getAuthorizationDetails: (id: string) => Promise<{
@@ -78,7 +78,7 @@ function Consent() {
   return (
     <main className="min-h-screen flex flex-col items-center justify-center px-6 py-10 bg-white">
       <div className="w-full max-w-sm text-center">
-        <img src={logo.url} alt="MiProjet Go" className="h-16 w-auto mx-auto mb-6 object-contain" />
+        <img src={LOGO_URL} alt="MiProjet Go" className="h-16 w-auto mx-auto mb-6 object-contain" />
         <h1 className="font-display text-xl font-bold text-primary mb-2">
           Connecter {clientName}
         </h1>

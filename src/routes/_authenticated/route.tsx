@@ -2,7 +2,7 @@ import { createFileRoute, Outlet, redirect, Link, useNavigate, useRouterState } 
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 import { LayoutDashboard, PlusCircle, History, LogOut, Users, Mic, User as UserIcon, Package, Settings } from "lucide-react";
-import logo from "@/assets/miprojet-go-logo.png.asset.json";
+import { LOGO_URL } from "@/lib/brand";
 import { SyncBanner } from "@/components/sync-banner";
 import { useIdleLogout } from "@/hooks/use-idle-logout";
 import { TenantSwitcher } from "@/components/tenant-switcher";
@@ -76,7 +76,7 @@ function AuthedLayout() {
       <header className="sticky top-0 z-30 backdrop-blur-md bg-background/90 border-b border-border shadow-[var(--shadow-soft)]">
         <div className="max-w-2xl mx-auto px-4 h-16 grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3">
           <Link to="/dashboard" className="flex items-center shrink-0">
-            <img src={logo.url} alt="MiProjet Go" className="h-10 w-auto object-contain" />
+            <img src={LOGO_URL} alt="MiProjet Go" className="h-10 w-auto object-contain" />
             <span className="sr-only">MiProjet Go</span>
           </Link>
           {/* Sélecteur d'espace d'activité (multi-tenant UI, DB à venir) */}

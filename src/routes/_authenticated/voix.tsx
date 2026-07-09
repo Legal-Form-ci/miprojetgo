@@ -5,6 +5,7 @@ import { Mic, MicOff, Loader2, Sparkles, ArrowRight, AlertCircle } from "lucide-
 import { toast } from "sonner";
 
 import { parseVoiceOperation, type VoiceParsedOperation } from "@/lib/voice-parse.functions";
+import { parseVoiceOffline } from "@/lib/voice-parse-offline";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/voix")({
@@ -160,7 +161,24 @@ function VoicePage() {
     if (!text) return toast.error("Parle d'abord, puis appuie sur Analyser.");
     setAnalyzing(true);
     try {
-      const res = await parse({ data: { transcript: text } });
+      let res: VoiceParsedOperation;
+      try {
+        res = await parse({ data: { transcript: text } });
+      } catch (err) {
+        // Fallback local (hors ligne / IA indisponible)
+        console.warn("Fallback vocal local :", err);
+        res = parseVoiceOffline(text);
+        toast.warning("IA hors ligne — analyse locale. Vérifie avant d'enregistrer.");
+      }
+      // Validation stricte : rejette les lignes incohérentes
+      if (!res.montant || res.montant <= 0) {
+        toast.error("Montant introuvable — reformule ou corrige la transcription.");
+        setResult({ ...res, confidence: "faible", raison: res.raison || "Montant manquant." });
+        return;
+      }
+      if (!res.description || res.description.trim().length < 2) {
+        res.description = text.slice(0, 60);
+      }
       setResult(res);
       const lang = res.lang === "en" ? "en-US" : res.lang === "es" ? "es-ES" : "fr-FR";
       if (res.confidence === "faible" && res.raison) {
