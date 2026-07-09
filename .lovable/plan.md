@@ -1,73 +1,59 @@
+# Finalisation MiProjet Go
 
-## État au 13/06/2026
+"Implémente tout ce qui reste" est trop large pour être exécuté d'un bloc sans risquer d'aller à côté de ce que tu veux vraiment. Voici la liste concrète de ce qui manque ou reste à harmoniser dans l'app actuelle. Dis-moi lesquels garder, retirer ou reprioriser — puis j'exécute tout en série.
 
-### Vague 1 ✅ livrée
-### Vague 2 ✅ livrée maintenant
-- Table `produits` + page CRUD `/produits` (chacun gère son catalogue)
-- `operations.new` : combobox produit (autocomplete) + Quantité × Prix unitaire → Montant auto
-- Voix : mode push-to-talk (`continuous = false`, l'IA s'arrête au silence)
-- Export `.xlsx` (lib `xlsx`) sur l'historique avec totaux (entrées, sorties, bénéfice)
-- Rapport PDF : bloc "Total global de la période" ajouté en bas
-- Nav mobile recompacté (Produits remplace Import + Sync → accessibles via Profil/Dashboard)
+## État actuel (déjà en place)
 
-### Hors scope technique (à valider avec toi)
-- **Vercel** : ce projet utilise nitro preset Cloudflare (configuré par `@lovable.dev/vite-tanstack-config`). Pour déployer sur Vercel il faudrait basculer le preset, ce que la config Lovable ne permet pas en l'état. Lovable héberge déjà l'app sur `maestrabook.lovable.app` (CDN équivalent). Si Vercel est obligatoire, dis-le et je te propose la marche à suivre (eject de la config Lovable).
-- **PWA** : déjà installable (manifest + icons + service worker `vite-plugin-pwa` autoUpdate). Aucune action requise.
+- Écrans : dashboard, opérations (liste + new), voix, import, historique, produits, utilisateurs, paramètres, profil, synchronisation.
+- Backend : `operations`, `produits`, `profiles`, `user_roles`, `activity_settings`, `export_audit_logs`, `import_sessions` + RLS + rôles.
+- Serveur : exports CSV/Excel/rapport avec paywall + audit, IA vocale et import (fallback GPT → Gemini), redeem export unlock, MCP.
+- UI : charte vert dominant, carte solde format Visa réel.
 
-## Reste à faire (Vague 3 optionnelle)
-- WebAuthn (Face ID / empreinte navigateur)
-- Catégorisation IA produits en arrière-plan
-- Édition rapide post-import IA renforcée
+## Ce qui reste — à confirmer
 
----
+### A. Harmonisation UI (rapide)
+1. Appliquer le nouveau vert dominant sur tous les écrans qui utilisent encore des dégradés/couleurs héritées du bleu (voix, historique, import, produits, utilisateurs, paramètres, synchronisation).
+2. Boutons, cartes, tableaux : composants shadcn uniformes (variants `default`/`secondary`/`ghost`), plus de styles inline dispersés.
+3. En-têtes de page harmonisés (grid responsive + logo + titre + sous-titre).
 
-## Historique des vagues
+### B. Logique métier automatique
+4. **Recalcul automatique du stock produits** après chaque opération (entrée = achat qui augmente stock si lié à un produit, sortie = vente qui diminue) — actuellement les produits et opérations ne sont pas liés.
+5. **Alertes stock bas** : badge et notification quand un produit passe sous son seuil.
+6. **Clôture de journée automatique** : rapport synthétique généré chaque soir (via cron pg_cron) et disponible dans l'historique.
+7. **Détection de doublons** à la saisie (même montant + description + jour) → confirmation.
+8. **Suggestion IA** dans `/operations/new` : quand on tape la description, proposer catégorie + prix habituel depuis l'historique.
 
-### Réalité du chantier (rappel initial)
+### C. Téléchargements & documents
+9. **Reçu PDF** pour chaque opération (bouton "Télécharger reçu" dans le détail).
+10. **Rapport mensuel PDF** (résumé + top produits + graphique entrées/sorties) déclenchable depuis l'historique.
+11. **Export produits** CSV/Excel (déjà côté opérations, à répliquer pour produits).
+12. **Sauvegarde complète** ZIP (opérations + produits + paramètres) — protégé paywall.
 
-Tu as listé ~18 features distinctes. Je ne peux pas tout livrer **dans un seul message** sans casser le build. Je propose 3 vagues séquentielles, chacune testable. Tu valides la vague 1, je lance la 2, etc.
+### D. Modules manquants
+13. **Journal d'activité** : voir qui (gérant/caissier/livreur) a fait quoi, quand — lecture seule pour le propriétaire.
+14. **Facturation client** léger : créer un devis/facture à partir d'une sélection d'opérations d'entrée → PDF partageable WhatsApp.
+15. **Notifications in-app** (toast + centre) : nouvelle vente, stock bas, paiement reçu, export prêt.
+16. **Mode hors-ligne renforcé** : file d'attente déjà présente, ajouter un indicateur de synchro par opération (⏳ / ✅ / ❌) et un bouton "Retenter tout".
 
-La reco faciale custom (cam + IA visage) et la connexion par empreinte **ne sont pas faisables en PWA web** — ça demande une app native (Capacitor/iOS/Android). Je vais à la place utiliser **WebAuthn** (qui déclenche Face ID / empreinte du téléphone via le navigateur) — c'est la seule option viable. Si tu veux vraiment du custom, il faut convertir en app native plus tard.
+### E. Sécurité & conformité
+17. Vérifier RLS sur toutes les tables introduites (audit + policies TO authenticated uniquement).
+18. Chiffrer / masquer le numéro de téléphone dans les logs.
+19. Rate-limit côté serveur sur `parseVoiceOperation` et `analyzeImportLines` (5 req/min/user).
 
-## Vague 1 — Visuel & sécurité (cette itération)
+## Ce dont j'ai besoin de toi
 
-1. **Carte Visa dynamique** (`src/components/balance-card.tsx`)
-   - Tier auto selon solde positif : Bronze < 50k, Argent < 200k, Or < 1M, Saphir < 5M, Diamant ≥ 5M
-   - Tier Rouge si solde négatif
-   - Affiche nom complet, téléphone, photo profil miniature, numéro masqué (•••• derniers 4 du tel)
-   - Mini-cartes Entrée (vert) / Sortie (rouge) du jour avec sélecteur période (Jour/Semaine/Mois/Trim/Sem/An/Tout)
-2. **Scoping vendeur/admin** : dashboard vendeur ne voit QUE ses opérations ; admin agrège tout. Migration RLS déjà OK (policy actuelle), mais le dashboard fait un global → je filtre par `user_id` côté query si non-admin.
-3. **Auto-déconnexion 5 min d'inactivité** (`src/hooks/use-idle-logout.ts`)
-4. **Upload fichier dans import IA** (en plus de la caméra) — input `accept="image/*"` sans `capture`
-5. **Profil avec photo** : bucket Storage `avatars` + page `/_authenticated/profil.tsx` ; admin peut éditer tout profil ; auto-recadrage carré + compression côté client (canvas).
-6. **Schema** : ajouter colonnes `profiles.username`, `profiles.first_name`, `profiles.last_name`, `profiles.avatar_url`. Migration de remplissage depuis `full_name` existant.
+Réponds simplement avec :
 
-## Vague 2 — Métier (après validation V1)
+- **"Tout"** → j'exécute A → E dans l'ordre, en plusieurs tours (chaque tour = un lot cohérent testé).
+- **Numéros** (ex. "A, 4, 5, 9, 10, 13") → je fais uniquement ceux-là.
+- **"Skip X"** → je retire X et fais le reste.
 
-7. Table `produits` (admin CRUD) : nom, prix_unitaire, catégorie, user_id (scope vendeur ou global admin)
-8. Formulaire opération : champ **Quantité × Prix unitaire = Montant auto**, autocomplete produits via combobox
-9. Parser vocal : correction quantité×prix (« bière 500f vendue 3 » → 1500), normalisation nom produit via fuzzy-match dans `produits`, anti-répétition renforcé
-10. Mode vocal **manuel push-to-talk** : `continuous=false`, l'utilisateur tient/clique pour parler, l'IA ignore les silences
-11. Job de nettoyage : `cleanupOperations` server fn qui re-normalise les descriptions existantes via fuzzy-match produits
+Rien de tout cela n'est destructif : les tables existantes ne sont pas modifiées, seulement enrichies. Aucune donnée existante ne sera perdue.
 
-## Vague 3 — Polish (après validation V2)
+## Notes techniques
 
-12. Export Excel `.xlsx` (lib `xlsx`) même format que PDF, colonnes jour/heure
-13. Édition rapide post-IA des lignes import (déjà partiellement là, à renforcer)
-14. WebAuthn (Face ID / empreinte navigateur) sur page de connexion + page paramètres pour enregistrer
-15. Rapport PDF : ajouter Total Global en plus des totaux mois
-16. Catégorisation IA en arrière-plan pour nouveaux produits (Gemini Flash recherche la catégorie)
-
-## Hors scope (impossible en PWA)
-
-- Reco faciale custom par caméra : nécessite app native
-- Voix synthèse accent ivoirien RTI : Web Speech API n'a pas ce profil, ElevenLabs requis (tu as refusé)
-- 2 empreintes différentes : la PWA ne contrôle pas combien le téléphone enregistre
-
-## Technique (Vague 1 détails)
-
-- Migration : `ALTER TABLE profiles ADD COLUMN username text UNIQUE, first_name text, last_name text, avatar_url text;` + backfill `first_name = split_part(full_name,' ',1)`
-- Storage : `avatars` bucket public, RLS `objects` : upload propre user OR admin
-- `BalanceCard` : design CSS variables gradient par tier ; calcul tier dans `lib/tier.ts`
-- Dashboard query : si pas admin, ajouter `.eq('user_id', userId)`
-- `use-idle-logout` : listeners mousemove/keydown/touchstart, timer 5min, signOut + redirect
+- Reçus/rapports PDF : générés côté serveur via `createServerFn` avec `pdf-lib` (compatible Cloudflare Workers, contrairement à Puppeteer).
+- Clôture auto : `pg_cron` + route `/api/public/cron/daily-close` avec vérification de secret HMAC.
+- Stock produits ↔ opérations : nouvelle colonne `operations.produit_id` (nullable, FK), trigger PL/pgSQL qui ajuste `produits.stock`.
+- Rate-limit : table `rate_limits(user_id, endpoint, window_start, count)` + fonction SECURITY DEFINER.
+- Aucun secret utilisateur requis : Lovable AI Gateway, PDF côté serveur, Supabase déjà en place.
