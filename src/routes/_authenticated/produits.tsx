@@ -46,7 +46,7 @@ function ProduitsPage() {
       const { data: u } = await supabase.auth.getUser();
       if (!u.user) throw new Error("Non connecté");
       if (!p.nom?.trim()) throw new Error("Nom requis");
-      const payload: Record<string, unknown> = {
+      const payload = {
         user_id: u.user.id,
         nom: p.nom.trim(),
         prix_unitaire: Number(p.prix_unitaire) || 0,
