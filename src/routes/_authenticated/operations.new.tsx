@@ -165,8 +165,16 @@ function NewOperation() {
             onChange={(e) => { setProduitQuery(e.target.value); setShowSuggest(true); }}
             onFocus={() => setShowSuggest(true)}
             onBlur={() => setTimeout(() => setShowSuggest(false), 200)}
+            list="produits-datalist"
             className="w-full h-11 px-3 rounded-xl bg-card border border-border focus:outline-none focus:ring-2 focus:ring-ring"
           />
+          <datalist id="produits-datalist">
+            {produits.map((p) => (
+              <option key={p.id} value={p.nom}>
+                {new Intl.NumberFormat("fr-FR").format(p.prix_unitaire)} F · {p.categorie}
+              </option>
+            ))}
+          </datalist>
           {showSuggest && suggestions.length > 0 && (
             <ul className="absolute z-20 left-0 right-0 mt-1 max-h-64 overflow-auto rounded-xl bg-card border border-border shadow-lg">
               {suggestions.map((p) => (
