@@ -162,7 +162,14 @@ function NewOperation() {
             type="text"
             placeholder="Cherche un produit…"
             value={produitQuery}
-            onChange={(e) => { setProduitQuery(e.target.value); setShowSuggest(true); }}
+            onChange={(e) => {
+              const v = e.target.value;
+              setProduitQuery(v);
+              setShowSuggest(true);
+              // Sélection via <datalist> (dropdown natif) → auto-remplir
+              const exact = produits.find((p) => p.nom === v);
+              if (exact) pickProduit(exact);
+            }}
             onFocus={() => setShowSuggest(true)}
             onBlur={() => setTimeout(() => setShowSuggest(false), 200)}
             list="produits-datalist"
