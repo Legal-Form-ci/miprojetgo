@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ArrowDownCircle, ArrowUpCircle, Loader2, ArrowLeft, Package } from "lucide-react";
 import { enqueueOperation } from "@/lib/offline-queue";
+import { CATEGORIES, PAIEMENTS } from "@/lib/categories";
 
 export const Route = createFileRoute("/_authenticated/operations/new")({
   head: () => ({ meta: [{ title: "Nouvelle opération — MiProjet Go" }] }),
@@ -18,20 +19,6 @@ export const Route = createFileRoute("/_authenticated/operations/new")({
   }),
   component: NewOperation,
 });
-
-const CATEGORIES = [
-  "Boissons",
-  "Restauration",
-  "Viandes",
-  "Poissons",
-  "Legumes",
-  "Condiments",
-  "Alimentation",
-  "Carburant",
-  "Divers",
-  "Autre",
-];
-const PAIEMENTS = ["Espèces", "Especes", "Wave", "MTN Money", "Orange Money", "Moov Money"];
 
 function NewOperation() {
   const navigate = useNavigate();
@@ -175,11 +162,26 @@ function NewOperation() {
             type="text"
             placeholder="Cherche un produit…"
             value={produitQuery}
-            onChange={(e) => { setProduitQuery(e.target.value); setShowSuggest(true); }}
+            onChange={(e) => {
+              const v = e.target.value;
+              setProduitQuery(v);
+              setShowSuggest(true);
+              // Sélection via <datalist> (dropdown natif) → auto-remplir
+              const exact = produits.find((p) => p.nom === v);
+              if (exact) pickProduit(exact);
+            }}
             onFocus={() => setShowSuggest(true)}
             onBlur={() => setTimeout(() => setShowSuggest(false), 200)}
+            list="produits-datalist"
             className="w-full h-11 px-3 rounded-xl bg-card border border-border focus:outline-none focus:ring-2 focus:ring-ring"
           />
+          <datalist id="produits-datalist">
+            {produits.map((p) => (
+              <option key={p.id} value={p.nom}>
+                {new Intl.NumberFormat("fr-FR").format(p.prix_unitaire)} F · {p.categorie}
+              </option>
+            ))}
+          </datalist>
           {showSuggest && suggestions.length > 0 && (
             <ul className="absolute z-20 left-0 right-0 mt-1 max-h-64 overflow-auto rounded-xl bg-card border border-border shadow-lg">
               {suggestions.map((p) => (

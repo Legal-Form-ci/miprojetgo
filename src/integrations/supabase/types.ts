@@ -21,12 +21,24 @@ export type Database = {
           address: string | null
           city: string | null
           created_at: string
+          currency: string
           description: string | null
+          email: string | null
+          facebook: string | null
           id: string
+          instagram: string | null
+          latitude: number | null
+          longitude: number | null
+          opening_hours: string | null
           owner_name: string | null
           phone: string | null
+          photos: Json
+          slogan: string | null
+          tiktok: string | null
           updated_at: string
           user_id: string
+          website: string | null
+          whatsapp: string | null
         }
         Insert: {
           activity_name?: string
@@ -34,12 +46,24 @@ export type Database = {
           address?: string | null
           city?: string | null
           created_at?: string
+          currency?: string
           description?: string | null
+          email?: string | null
+          facebook?: string | null
           id?: string
+          instagram?: string | null
+          latitude?: number | null
+          longitude?: number | null
+          opening_hours?: string | null
           owner_name?: string | null
           phone?: string | null
+          photos?: Json
+          slogan?: string | null
+          tiktok?: string | null
           updated_at?: string
           user_id: string
+          website?: string | null
+          whatsapp?: string | null
         }
         Update: {
           activity_name?: string
@@ -47,12 +71,24 @@ export type Database = {
           address?: string | null
           city?: string | null
           created_at?: string
+          currency?: string
           description?: string | null
+          email?: string | null
+          facebook?: string | null
           id?: string
+          instagram?: string | null
+          latitude?: number | null
+          longitude?: number | null
+          opening_hours?: string | null
           owner_name?: string | null
           phone?: string | null
+          photos?: Json
+          slogan?: string | null
+          tiktok?: string | null
           updated_at?: string
           user_id?: string
+          website?: string | null
+          whatsapp?: string | null
         }
         Relationships: []
       }
