@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ArrowDownCircle, ArrowUpCircle, Loader2, ArrowLeft, Package } from "lucide-react";
 import { enqueueOperation } from "@/lib/offline-queue";
+import { CATEGORIES, PAIEMENTS } from "@/lib/categories";
 
 export const Route = createFileRoute("/_authenticated/operations/new")({
   head: () => ({ meta: [{ title: "Nouvelle opération — MiProjet Go" }] }),
@@ -18,20 +19,6 @@ export const Route = createFileRoute("/_authenticated/operations/new")({
   }),
   component: NewOperation,
 });
-
-const CATEGORIES = [
-  "Boissons",
-  "Restauration",
-  "Viandes",
-  "Poissons",
-  "Legumes",
-  "Condiments",
-  "Alimentation",
-  "Carburant",
-  "Divers",
-  "Autre",
-];
-const PAIEMENTS = ["Espèces", "Especes", "Wave", "MTN Money", "Orange Money", "Moov Money"];
 
 function NewOperation() {
   const navigate = useNavigate();
