@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { ArrowDownCircle, ArrowUpCircle, Wallet, User } from "lucide-react";
 import { getTier, periodeStart, PERIODE_LABEL, type Periode } from "@/lib/tier";
 import { avatarSignedUrl } from "@/lib/avatar";
-import mark from "@/assets/miprojet-go-mark.png.asset.json";
+import { LOGO_MARK_URL } from "@/lib/brand";
 
 type Op = { type: "entree" | "sortie"; montant: number; date_operation: string };
 

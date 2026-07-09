@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate, useSearch } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import logo from "@/assets/miprojet-go-logo.png.asset.json";
+import { LOGO_URL } from "@/lib/brand";
 import { toast } from "sonner";
 import { Loader2, Eye, EyeOff, Phone, Lock, User, Sparkles } from "lucide-react";
 

@@ -2,7 +2,7 @@ import { createFileRoute, Outlet, redirect, Link, useNavigate, useRouterState } 
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 import { LayoutDashboard, PlusCircle, History, LogOut, Users, Mic, User as UserIcon, Package, Settings } from "lucide-react";
-import logo from "@/assets/miprojet-go-logo.png.asset.json";
+import { LOGO_URL } from "@/lib/brand";
 import { SyncBanner } from "@/components/sync-banner";
 import { useIdleLogout } from "@/hooks/use-idle-logout";
 import { TenantSwitcher } from "@/components/tenant-switcher";
