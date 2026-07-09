@@ -126,6 +126,8 @@ export type Database = {
           mode_paiement: string
           montant: number
           note: string | null
+          produit_id: string | null
+          quantite: number | null
           recu_url: string | null
           source: Database["public"]["Enums"]["op_source"]
           type: Database["public"]["Enums"]["op_type"]
@@ -140,6 +142,8 @@ export type Database = {
           mode_paiement: string
           montant: number
           note?: string | null
+          produit_id?: string | null
+          quantite?: number | null
           recu_url?: string | null
           source?: Database["public"]["Enums"]["op_source"]
           type: Database["public"]["Enums"]["op_type"]
@@ -154,12 +158,22 @@ export type Database = {
           mode_paiement?: string
           montant?: number
           note?: string | null
+          produit_id?: string | null
+          quantite?: number | null
           recu_url?: string | null
           source?: Database["public"]["Enums"]["op_source"]
           type?: Database["public"]["Enums"]["op_type"]
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "operations_produit_id_fkey"
+            columns: ["produit_id"]
+            isOneToOne: false
+            referencedRelation: "produits"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       produits: {
         Row: {
@@ -169,6 +183,9 @@ export type Database = {
           id: string
           nom: string
           prix_unitaire: number
+          seuil_alerte: number
+          stock_actif: boolean
+          stock_actuel: number
           unite: string | null
           updated_at: string
           user_id: string
@@ -180,6 +197,9 @@ export type Database = {
           id?: string
           nom: string
           prix_unitaire?: number
+          seuil_alerte?: number
+          stock_actif?: boolean
+          stock_actuel?: number
           unite?: string | null
           updated_at?: string
           user_id: string
@@ -191,6 +211,9 @@ export type Database = {
           id?: string
           nom?: string
           prix_unitaire?: number
+          seuil_alerte?: number
+          stock_actif?: boolean
+          stock_actuel?: number
           unite?: string | null
           updated_at?: string
           user_id?: string
