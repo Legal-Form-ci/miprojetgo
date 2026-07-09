@@ -129,7 +129,7 @@ export function BalanceCard({
             </div>
           </div>
           <img
-            src={mark.url}
+            src={LOGO_MARK_URL}
             alt="MiProjet Go"
             width={64}
             height={64}

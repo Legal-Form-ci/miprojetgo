@@ -76,7 +76,7 @@ function AuthedLayout() {
       <header className="sticky top-0 z-30 backdrop-blur-md bg-background/90 border-b border-border shadow-[var(--shadow-soft)]">
         <div className="max-w-2xl mx-auto px-4 h-16 grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3">
           <Link to="/dashboard" className="flex items-center shrink-0">
-            <img src={logo.url} alt="MiProjet Go" className="h-10 w-auto object-contain" />
+            <img src={LOGO_URL} alt="MiProjet Go" className="h-10 w-auto object-contain" />
             <span className="sr-only">MiProjet Go</span>
           </Link>
           {/* Sélecteur d'espace d'activité (multi-tenant UI, DB à venir) */}

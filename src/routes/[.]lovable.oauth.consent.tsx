@@ -78,7 +78,7 @@ function Consent() {
   return (
     <main className="min-h-screen flex flex-col items-center justify-center px-6 py-10 bg-white">
       <div className="w-full max-w-sm text-center">
-        <img src={logo.url} alt="MiProjet Go" className="h-16 w-auto mx-auto mb-6 object-contain" />
+        <img src={LOGO_URL} alt="MiProjet Go" className="h-16 w-auto mx-auto mb-6 object-contain" />
         <h1 className="font-display text-xl font-bold text-primary mb-2">
           Connecter {clientName}
         </h1>

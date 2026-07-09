@@ -132,7 +132,7 @@ function AuthPage() {
               style={{ background: "var(--gradient-brand)" }}
             />
             <img
-              src={logo.url}
+              src={LOGO_URL}
               alt="MiProjet Go"
               className="relative h-32 w-auto max-w-full object-contain drop-shadow-xl"
             />
