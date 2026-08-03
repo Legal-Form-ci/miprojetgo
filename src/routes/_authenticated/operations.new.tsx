@@ -9,7 +9,16 @@ import { CATEGORIES, PAIEMENTS } from "@/lib/categories";
 
 export const Route = createFileRoute("/_authenticated/operations/new")({
   head: () => ({ meta: [{ title: "Nouvelle opération — MiProjet Go" }] }),
-  validateSearch: (s: Record<string, unknown>) => ({
+  validateSearch: (
+    s: Record<string, unknown>,
+  ): {
+    type?: "entree" | "sortie";
+    montant?: string;
+    description?: string;
+    categorie?: string;
+    mode?: string;
+    note?: string;
+  } => ({
     type: (s.type === "sortie" ? "sortie" : "entree") as "entree" | "sortie",
     montant: typeof s.montant === "string" ? s.montant : undefined,
     description: typeof s.description === "string" ? s.description : undefined,
