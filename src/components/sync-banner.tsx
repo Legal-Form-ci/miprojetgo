@@ -7,6 +7,7 @@ import {
   subscribeQueue,
   subscribeProgress,
   subscribeSyncLog,
+  startAutoSync,
   type QueuedOperation,
   type SyncLogEntry,
 } from "@/lib/offline-queue";
@@ -32,7 +33,8 @@ export function SyncBanner() {
     const unsub = subscribeQueue(refresh);
     const unsubP = subscribeProgress((d) => setProgress({ done: d.done, total: d.total }));
     const unsubLog = subscribeSyncLog(() => setLog(getSyncLog()));
-    return () => { unsub(); unsubP(); unsubLog(); };
+    const stopAuto = startAutoSync();
+    return () => { unsub(); unsubP(); unsubLog(); stopAuto(); };
   }, []);
 
   // Auto-sync when coming online
