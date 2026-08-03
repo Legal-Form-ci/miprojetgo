@@ -272,7 +272,7 @@ function VoicePage() {
       {(!online || pending > 0) && (
         <div className="rounded-2xl border border-amber-300 bg-amber-50 p-3 text-xs font-semibold text-amber-900">
           {!online
-            ? `Hors ligne — analyse locale активée. ${pending > 0 ? `${pending} opération(s) en attente de connexion.` : "Les saisies seront mises en file et envoyées automatiquement."}`
+            ? `Hors ligne — analyse locale activée. ${pending > 0 ? `${pending} opération(s) en attente de connexion.` : "Les saisies seront mises en file et envoyées automatiquement."}`
             : `${pending} opération(s) en attente de connexion — reprise automatique en cours.`}
         </div>
       )}
