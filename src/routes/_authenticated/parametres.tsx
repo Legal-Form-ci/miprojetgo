@@ -1,11 +1,19 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { Building2, Camera, Loader2, MapPin, Save, Settings, Share2, Store, Trash2, Upload } from "lucide-react";
+import { Building2, Camera, Loader2, MapPin, Mic, Save, Settings, Share2, Store, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
 import { TENANT_KINDS, type TenantKind, useTenants } from "@/lib/tenant";
+import {
+  DEFAULT_GREETING_TEXT,
+  buildGreeting,
+  getGreetingPrefs,
+  saveGreetingPrefs,
+  type GreetingFrequency,
+  type GreetingPrefs,
+} from "@/lib/voice-greeting";
 
 export const Route = createFileRoute("/_authenticated/parametres")({
   head: () => ({ meta: [{ title: "Paramètres activité — MiProjet Go" }] }),
@@ -49,6 +57,9 @@ function ActivitySettingsPage() {
   const [uploading, setUploading] = useState(false);
   const [photos, setPhotos] = useState<string[]>([]);
   const [photoUrls, setPhotoUrls] = useState<Record<string, string>>({});
+  const [greeting, setGreeting] = useState<GreetingPrefs>(() => getGreetingPrefs());
+  const [customType, setCustomType] = useState("");
+  const [greetName, setGreetName] = useState("Entrepreneur");
   const [form, setForm] = useState({
     activity_name: active.nom,
     activity_type: active.kind,
@@ -72,6 +83,26 @@ function ActivitySettingsPage() {
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null));
+  }, []);
+
+  useEffect(() => {
+    setGreeting(getGreetingPrefs());
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase.auth.getUser();
+      if (!data.user) return;
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("first_name, last_name, full_name")
+        .eq("id", data.user.id)
+        .maybeSingle();
+      const composed = [profile?.first_name, profile?.last_name].filter(Boolean).join(" ").trim();
+      if (!cancelled) setGreetName(composed || profile?.full_name || "Entrepreneur");
+    })();
+    return () => { cancelled = true; };
   }, []);
 
   const { data: settings } = useQuery({
@@ -112,6 +143,8 @@ function ActivitySettingsPage() {
     });
     const ph = Array.isArray(settings.photos) ? (settings.photos as string[]) : [];
     setPhotos(ph);
+    const known = TENANT_KINDS.some((k) => k.kind === settings.activity_type);
+    if (!known && settings.activity_type) setCustomType(settings.activity_type);
   }, [settings, active.kind, active.nom]);
 
   // Générer les URLs signées pour la galerie
@@ -173,6 +206,18 @@ function ActivitySettingsPage() {
   async function save() {
     if (!userId) return toast.error("Session introuvable");
     if (form.activity_name.trim().length < 2) return toast.error("Nom d'activité requis");
+    const activityType = form.activity_type === "autre" && customType.trim()
+      ? customType.trim()
+      : form.activity_type;
+    if (form.activity_type === "autre" && customType.trim().length < 2) {
+      return toast.error("Précise le type d'activité personnalisé.");
+    }
+    if (!form.city.trim() && !form.address.trim()) {
+      return toast.error("Indique au moins la ville ou l'adresse de l'activité.");
+    }
+    if (!form.phone.trim() && !form.whatsapp.trim()) {
+      return toast.error("Indique un téléphone ou un WhatsApp de contact.");
+    }
     if (photos.length < PHOTO_MIN) {
       return toast.error(`Ajoute au moins ${PHOTO_MIN} photos de l'activité (${photos.length}/${PHOTO_MIN}).`);
     }
@@ -182,7 +227,7 @@ function ActivitySettingsPage() {
       const payload = {
         user_id: userId,
         activity_name: form.activity_name.trim(),
-        activity_type: form.activity_type,
+        activity_type: activityType,
         owner_name: form.owner_name.trim() || null,
         phone: form.phone.trim() || null,
         address: form.address.trim() || null,
@@ -205,6 +250,7 @@ function ActivitySettingsPage() {
         .from("activity_settings" as never)
         .upsert(payload as never, { onConflict: "user_id" });
       if (error) throw error;
+      saveGreetingPrefs(greeting);
       rename(active.id, payload.activity_name);
       await qc.invalidateQueries({ queryKey: ["activity-settings", userId] });
       toast.success("Paramètres activité enregistrés");
@@ -252,6 +298,11 @@ function ActivitySettingsPage() {
             {TENANT_KINDS.map((k) => <option key={k.kind} value={k.kind}>{k.emoji} {k.label}</option>)}
           </select>
         </Field>
+        {form.activity_type === "autre" && (
+          <Field label="Précise ton type d'activité *">
+            <input value={customType} onChange={(e) => setCustomType(e.target.value)} className="mpg-input" placeholder="Ex: Vente de charbon, Réparation de vélos…" />
+          </Field>
+        )}
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <Field label="Nom du propriétaire">
             <input value={form.owner_name} onChange={(e) => setForm({ ...form, owner_name: e.target.value })} className="mpg-input" />
@@ -314,6 +365,71 @@ function ActivitySettingsPage() {
           <Field label="Instagram"><input value={form.instagram} onChange={(e) => setForm({ ...form, instagram: e.target.value })} className="mpg-input" placeholder="@compte" /></Field>
           <Field label="TikTok"><input value={form.tiktok} onChange={(e) => setForm({ ...form, tiktok: e.target.value })} className="mpg-input" placeholder="@compte" /></Field>
           <Field label="Site web"><input value={form.website} onChange={(e) => setForm({ ...form, website: e.target.value })} className="mpg-input" placeholder="https://…" /></Field>
+        </div>
+      </section>
+
+      <section className="rounded-2xl border border-border bg-card p-4 space-y-3" style={{ boxShadow: "var(--shadow-card)" }}>
+        <div className="flex items-center gap-2 text-primary">
+          <Mic className="h-4 w-4" />
+          <h2 className="font-display font-semibold">Salutation vocale</h2>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Reconnaissance FR · Baoulé · EN · ES conservée. Variables : <code>{"{salut}"}</code> (Bonjour/Bonsoir…) et <code>{"{nom}"}</code>.
+        </p>
+        <label className="flex items-center justify-between gap-3 rounded-xl border border-border px-3 py-2.5">
+          <span className="text-sm font-semibold">Activer la salutation</span>
+          <input type="checkbox" checked={greeting.enabled} onChange={(e) => setGreeting({ ...greeting, enabled: e.target.checked })} className="h-5 w-5 accent-[var(--primary)]" />
+        </label>
+        <label className="flex items-center justify-between gap-3 rounded-xl border border-border px-3 py-2.5">
+          <span className="text-sm font-semibold">Dire mon prénom et nom</span>
+          <input type="checkbox" checked={greeting.useName} onChange={(e) => setGreeting({ ...greeting, useName: e.target.checked })} className="h-5 w-5 accent-[var(--primary)]" />
+        </label>
+        <Field label="Texte exact">
+          <textarea
+            rows={2}
+            value={greeting.customText}
+            onChange={(e) => setGreeting({ ...greeting, customText: e.target.value })}
+            className="mpg-input min-h-20 resize-none py-3"
+            placeholder={DEFAULT_GREETING_TEXT}
+          />
+        </Field>
+        <Field label="Fréquence">
+          <select
+            value={greeting.frequency}
+            onChange={(e) => setGreeting({ ...greeting, frequency: e.target.value as GreetingFrequency })}
+            className="mpg-input"
+          >
+            <option value="always">À chaque appui micro</option>
+            <option value="once-per-session">Une fois par session</option>
+            <option value="once-per-day">Une fois par jour</option>
+            <option value="never">Jamais</option>
+          </select>
+        </Field>
+        <div className="rounded-xl bg-muted px-3 py-2 text-xs text-foreground/80">
+          Aperçu : « {buildGreeting(greeting, greetName) || "—"} »
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              if (typeof window === "undefined" || !("speechSynthesis" in window)) return toast.error("Synthèse vocale indisponible");
+              window.speechSynthesis.cancel();
+              const u = new SpeechSynthesisUtterance(buildGreeting(greeting, greetName));
+              u.lang = "fr-FR";
+              window.speechSynthesis.speak(u);
+            }}
+            className="h-11 rounded-xl border border-border bg-card font-semibold text-primary hover:bg-muted"
+          >
+            Écouter
+          </button>
+          <button
+            type="button"
+            onClick={() => { saveGreetingPrefs(greeting); toast.success("Salutation vocale enregistrée"); }}
+            className="h-11 rounded-xl font-semibold text-primary-foreground"
+            style={{ background: "var(--gradient-primary)" }}
+          >
+            Enregistrer la voix
+          </button>
         </div>
       </section>
 

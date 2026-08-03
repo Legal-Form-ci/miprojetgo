@@ -39,6 +39,7 @@ function NewOperation() {
   const [quantite, setQuantite] = useState<string>("1");
   const [prixUnit, setPrixUnit] = useState<string>("");
   const [produitQuery, setProduitQuery] = useState("");
+  const [produitId, setProduitId] = useState<string | null>(null);
   const [showSuggest, setShowSuggest] = useState(false);
   const [description, setDescription] = useState(search.description ?? "");
   const [categorie, setCategorie] = useState(
@@ -59,11 +60,19 @@ function NewOperation() {
     queryFn: async () => {
       const { data } = await supabase
         .from("produits")
-        .select("id, nom, prix_unitaire, categorie")
+        .select("id, nom, prix_unitaire, categorie, unite, stock_actuel, stock_actif")
         .eq("actif", true)
         .order("nom")
         .limit(200);
-      return (data ?? []) as Array<{ id: string; nom: string; prix_unitaire: number; categorie: string }>;
+      return (data ?? []) as Array<{
+        id: string;
+        nom: string;
+        prix_unitaire: number;
+        categorie: string;
+        unite: string | null;
+        stock_actuel: number | null;
+        stock_actif: boolean | null;
+      }>;
     },
   });
 
@@ -80,10 +89,17 @@ function NewOperation() {
     if (q > 0 && pu > 0) setMontant(String(Math.round(q * pu)));
   }, [quantite, prixUnit]);
 
-  function pickProduit(p: { nom: string; prix_unitaire: number; categorie: string }) {
+  const selectedProduit = useMemo(
+    () => produits.find((p) => p.id === produitId) ?? null,
+    [produits, produitId],
+  );
+
+  function pickProduit(p: { id: string; nom: string; prix_unitaire: number; categorie: string }) {
+    setProduitId(p.id);
     setDescription(p.nom);
     setProduitQuery(p.nom);
     setPrixUnit(String(p.prix_unitaire));
+    if (!quantite || Number(quantite.replace(",", ".")) <= 0) setQuantite("1");
     if (CATEGORIES.includes(p.categorie)) setCategorie(p.categorie);
     setShowSuggest(false);
   }
@@ -102,6 +118,8 @@ function NewOperation() {
         note: note.trim() || null,
         date_operation: new Date(date).toISOString(),
         source: "manuel" as const,
+        produit_id: produitId,
+        quantite: produitId ? Number(quantite.replace(",", ".")) || 1 : null,
       };
       const offline = typeof navigator !== "undefined" && !navigator.onLine;
       if (offline) {
@@ -140,6 +158,14 @@ function NewOperation() {
     const num = Number(montant.replace(/\s/g, "").replace(",", "."));
     if (!num || num <= 0) return toast.error("Montant invalide");
     if (description.trim().length < 2) return toast.error("Description requise");
+    // Autocomplétion verrouillée : si un texte produit est saisi, il doit correspondre à une sélection réelle.
+    if (produitQuery.trim() && !produitId) {
+      return toast.error("Choisis un produit dans la liste (ou vide le champ produit).");
+    }
+    if (produitId) {
+      const q = Number(quantite.replace(",", "."));
+      if (!q || q <= 0) return toast.error("Quantité invalide pour ce produit.");
+    }
     m.mutate();
   }
 
@@ -175,9 +201,11 @@ function NewOperation() {
               const v = e.target.value;
               setProduitQuery(v);
               setShowSuggest(true);
-              // Sélection via <datalist> (dropdown natif) → auto-remplir
-              const exact = produits.find((p) => p.nom === v);
-              if (exact) pickProduit(exact);
+              // Toute frappe casse le verrou : il faut re-sélectionner explicitement.
+              setProduitId(null);
+              // Sélection via <datalist> (dropdown natif) → auto-remplir si le nom est unique
+              const exacts = produits.filter((p) => p.nom === v);
+              if (exacts.length === 1) pickProduit(exacts[0]);
             }}
             onFocus={() => setShowSuggest(true)}
             onBlur={() => setTimeout(() => setShowSuggest(false), 200)}
@@ -191,7 +219,7 @@ function NewOperation() {
               </option>
             ))}
           </datalist>
-          {showSuggest && suggestions.length > 0 && (
+          {showSuggest && !produitId && suggestions.length > 0 && (
             <ul className="absolute z-20 left-0 right-0 mt-1 max-h-64 overflow-auto rounded-xl bg-card border border-border shadow-lg">
               {suggestions.map((p) => (
                 <li key={p.id}>
@@ -200,7 +228,10 @@ function NewOperation() {
                     onClick={() => pickProduit(p)}
                     className="w-full text-left px-3 py-2 hover:bg-muted text-sm flex justify-between gap-2"
                   >
-                    <span className="truncate">{p.nom}</span>
+                    <span className="truncate">
+                      {p.nom}
+                      <span className="ml-1 text-[11px] text-muted-foreground">· {p.categorie}{p.unite ? ` · ${p.unite}` : ""}</span>
+                    </span>
                     <span className="text-primary font-semibold tabular-nums">{new Intl.NumberFormat("fr-FR").format(p.prix_unitaire)} F</span>
                   </button>
                 </li>
@@ -208,6 +239,23 @@ function NewOperation() {
             </ul>
           )}
         </div>
+        {selectedProduit ? (
+          <div className="mt-1.5 flex items-center justify-between gap-2 rounded-xl border border-[var(--success)]/40 bg-[var(--success)]/10 px-3 py-2 text-xs">
+            <span className="truncate font-semibold text-foreground">
+              ✓ {selectedProduit.nom}
+              {selectedProduit.stock_actif ? ` · stock ${new Intl.NumberFormat("fr-FR").format(Number(selectedProduit.stock_actuel ?? 0))}` : ""}
+            </span>
+            <button
+              type="button"
+              onClick={() => { setProduitId(null); setProduitQuery(""); setPrixUnit(""); }}
+              className="shrink-0 font-semibold text-primary underline"
+            >
+              Changer
+            </button>
+          </div>
+        ) : produitQuery.trim() ? (
+          <p className="mt-1.5 text-[11px] font-semibold text-amber-700">Sélectionne le produit dans la liste pour verrouiller le prix et la quantité.</p>
+        ) : null}
       </Field>
 
       <div className="grid grid-cols-2 gap-3">

@@ -7,6 +7,8 @@ import { toast } from "sonner";
 import { parseVoiceOperation, type VoiceParsedOperation } from "@/lib/voice-parse.functions";
 import { parseVoiceOffline } from "@/lib/voice-parse-offline";
 import { supabase } from "@/integrations/supabase/client";
+import { buildGreeting, getGreetingPrefs, shouldGreet } from "@/lib/voice-greeting";
+import { getQueue, subscribeQueue } from "@/lib/offline-queue";
 
 export const Route = createFileRoute("/_authenticated/voix")({
   head: () => ({ meta: [{ title: "Saisie vocale — MiProjet Go" }] }),
@@ -46,12 +48,6 @@ function speak(text: string, lang = "fr-FR") {
   } catch {
     /* noop */
   }
-}
-
-function greetingFor(name: string) {
-  const h = new Date().getHours();
-  const greet = h < 5 ? "Bonne nuit" : h < 12 ? "Bonjour" : h < 18 ? "Bon après-midi" : "Bonsoir";
-  return `${greet} ${name}. Parle, l'IA comprend le français, le baoulé, l'anglais et l'espagnol.`;
 }
 
 const LANGS = [
@@ -96,9 +92,19 @@ function VoicePage() {
   const [supported, setSupported] = useState<boolean | null>(null);
   const [userName, setUserName] = useState("Entrepreneur");
   const [lang, setLang] = useState("fr-FR");
+  const [online, setOnline] = useState(true);
+  const [pending, setPending] = useState(0);
   const recRef = useRef<SpeechRec | null>(null);
   const committedCountRef = useRef(0);
-  const greetedRef = useRef(false);
+
+  useEffect(() => {
+    const refresh = () => {
+      setOnline(typeof navigator === "undefined" ? true : navigator.onLine);
+      setPending(getQueue().length);
+    };
+    refresh();
+    return subscribeQueue(refresh);
+  }, []);
 
   useEffect(() => {
     setSupported(!!getRecognitionCtor());
@@ -126,11 +132,12 @@ function VoicePage() {
     };
   }, []);
 
-  // La lecture vocale n'est autorisée qu'après une interaction : on salue au premier appui micro.
+  // La lecture vocale n'est autorisée qu'après une interaction : on salue à l'appui micro,
+  // selon les préférences définies dans Paramètres (texte, prénom/nom, fréquence).
   function greetOnce() {
-    if (greetedRef.current) return;
-    greetedRef.current = true;
-    speak(greetingFor(userName));
+    const prefs = getGreetingPrefs();
+    if (!shouldGreet(prefs)) return;
+    speak(buildGreeting(prefs, userName), lang);
   }
 
   function start() {
@@ -259,6 +266,14 @@ function VoicePage() {
           <div>
             Ton navigateur ne gère pas la reconnaissance vocale. Utilise Chrome sur Android ou Safari récent, ou écris la phrase ci-dessous.
           </div>
+        </div>
+      )}
+
+      {(!online || pending > 0) && (
+        <div className="rounded-2xl border border-amber-300 bg-amber-50 p-3 text-xs font-semibold text-amber-900">
+          {!online
+            ? `Hors ligne — analyse locale activée. ${pending > 0 ? `${pending} opération(s) en attente de connexion.` : "Les saisies seront mises en file et envoyées automatiquement."}`
+            : `${pending} opération(s) en attente de connexion — reprise automatique en cours.`}
         </div>
       )}
 
