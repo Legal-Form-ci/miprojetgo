@@ -51,13 +51,14 @@ function speak(text: string, lang = "fr-FR") {
 function greetingFor(name: string) {
   const h = new Date().getHours();
   const greet = h < 5 ? "Bonne nuit" : h < 12 ? "Bonjour" : h < 18 ? "Bon après-midi" : "Bonsoir";
-  const seen = typeof window !== "undefined" ? sessionStorage.getItem("voiceGreeted") : "1";
-  if (!seen) {
-    if (typeof window !== "undefined") sessionStorage.setItem("voiceGreeted", "1");
-    return `${greet} ${name}. Dis-moi ce que tu as vendu ou acheté.`;
-  }
-  return `${greet} ${name}. Je t'écoute.`;
+  return `${greet} ${name}. Parle, l'IA comprend le français, le baoulé, l'anglais et l'espagnol.`;
 }
+
+const LANGS = [
+  { code: "fr-FR", label: "FR / Baoulé" },
+  { code: "en-US", label: "EN" },
+  { code: "es-ES", label: "ES" },
+];
 
 // Supprime les répétitions consécutives ("deux deux deux bouteilles" -> "deux bouteilles")
 // et les segments répétés que la reconnaissance vocale peut accumuler.
@@ -94,31 +95,54 @@ function VoicePage() {
   const [result, setResult] = useState<VoiceParsedOperation | null>(null);
   const [supported, setSupported] = useState<boolean | null>(null);
   const [userName, setUserName] = useState("Entrepreneur");
+  const [lang, setLang] = useState("fr-FR");
   const recRef = useRef<SpeechRec | null>(null);
   const committedCountRef = useRef(0);
+  const greetedRef = useRef(false);
 
   useEffect(() => {
     setSupported(!!getRecognitionCtor());
-    supabase.auth.getUser().then(({ data }) => {
-      const meta = (data.user?.user_metadata ?? {}) as { name?: string; full_name?: string };
-      const name = meta.name || meta.full_name || "Entrepreneur";
-      setUserName(name);
-      const msg = greetingFor(name);
-      // Délai pour laisser l'autorisation audio se faire au premier clic
-      setTimeout(() => speak(msg), 600);
-    });
-    return () => recRef.current?.abort();
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase.auth.getUser();
+      const user = data.user;
+      if (!user) return;
+      const meta = (user.user_metadata ?? {}) as { name?: string; full_name?: string };
+      let name = meta.full_name || meta.name || "";
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("first_name, last_name, full_name")
+        .eq("id", user.id)
+        .maybeSingle();
+      if (profile) {
+        const composed = [profile.first_name, profile.last_name].filter(Boolean).join(" ").trim();
+        name = composed || profile.full_name || name;
+      }
+      if (!cancelled) setUserName(name || "Entrepreneur");
+    })();
+    return () => {
+      cancelled = true;
+      recRef.current?.abort();
+    };
   }, []);
+
+  // La lecture vocale n'est autorisée qu'après une interaction : on salue au premier appui micro.
+  function greetOnce() {
+    if (greetedRef.current) return;
+    greetedRef.current = true;
+    speak(greetingFor(userName));
+  }
 
   function start() {
     const Ctor = getRecognitionCtor();
     if (!Ctor) return toast.error("Reconnaissance vocale non disponible sur ce navigateur.");
+    greetOnce();
     setResult(null);
     setTranscript("");
     setInterim("");
     committedCountRef.current = 0;
     const rec = new Ctor();
-    rec.lang = "fr-FR";
+    rec.lang = lang;
     rec.continuous = false; // push-to-talk : on s'arrête au premier silence
     rec.interimResults = true;
     rec.maxAlternatives = 1;
@@ -258,6 +282,19 @@ function VoicePage() {
         <p className="text-[11px] opacity-75 mt-1">
           Ex : « j'ai vendu 2 casiers de 66 à 6500 », « acheté 5 litres essence 4000 »
         </p>
+        <div className="mt-3 flex justify-center gap-2">
+          {LANGS.map((l) => (
+            <button
+              key={l.code}
+              onClick={() => setLang(l.code)}
+              className={`px-3 py-1 rounded-full text-[11px] font-semibold border transition-colors ${
+                lang === l.code ? "bg-primary text-primary-foreground border-transparent" : "bg-card/70 text-foreground border-border"
+              }`}
+            >
+              {l.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div>
