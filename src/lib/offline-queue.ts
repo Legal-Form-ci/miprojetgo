@@ -18,6 +18,8 @@ export type QueuedOperation = {
   note: string | null;
   date_operation: string;
   source: "manuel" | "import_ia";
+  produit_id?: string | null;
+  quantite?: number | null;
   queued_at: string;
 };
 
@@ -155,4 +157,26 @@ export function subscribeSyncLog(cb: () => void): () => void {
   const handler = () => cb();
   window.addEventListener("maestra-sync-log-change", handler);
   return () => window.removeEventListener("maestra-sync-log-change", handler);
+}
+
+// Reprise automatique : tente un flush périodique dès que le réseau revient.
+export function startAutoSync(intervalMs = 25000): () => void {
+  if (typeof window === "undefined") return () => {};
+  let busy = false;
+  const attempt = async () => {
+    if (busy || !navigator.onLine || read().length === 0) return;
+    busy = true;
+    try {
+      await flushQueue();
+    } finally {
+      busy = false;
+    }
+  };
+  const timer = window.setInterval(attempt, intervalMs);
+  window.addEventListener("online", attempt);
+  void attempt();
+  return () => {
+    window.clearInterval(timer);
+    window.removeEventListener("online", attempt);
+  };
 }
