@@ -1,8 +1,8 @@
 {
-  "name": "MiProjet Go — L'app des entrepreneurs",
-  "short_name": "MiProjet Go",
-  "description": "Gestion des ventes, dépenses, stocks et équipes pour commerçants, artisans et TPE.",
-  "start_url": "/",
+  "name": "MiPROJET Go",
+  "short_name": "MiPROJET Go",
+  "description": "Enregistrez ventes, dépenses et stocks à la voix ou en un geste, même hors ligne.",
+  "start_url": "/dashboard",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",

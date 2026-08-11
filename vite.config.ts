@@ -28,9 +28,9 @@ export default defineConfig({
         "icons/favicon-32.png",
       ],
       manifest: {
-        name: "MiProjet Go — L'app des entrepreneurs",
-        short_name: "MiProjet Go",
-        description: "Gestion des ventes, dépenses, stocks et équipes pour commerçants, artisans et TPE.",
+        name: "MiPROJET Go",
+        short_name: "MiPROJET Go",
+        description: "Enregistrez ventes, dépenses et stocks à la voix ou en un geste, même hors ligne.",
         theme_color: "#003EAB",
         background_color: "#F4F8FF",
         display: "standalone",
