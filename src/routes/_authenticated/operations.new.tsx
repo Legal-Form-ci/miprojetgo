@@ -110,7 +110,7 @@ function NewOperation() {
       if (!u.user) throw new Error("Non connecté");
       const payload = {
         user_id: u.user.id,
-        type,
+        type: (type ?? "entree") as "entree" | "sortie",
         montant: Number(montant.replace(/\s/g, "").replace(",", ".")),
         description: description.trim(),
         categorie,
