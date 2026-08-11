@@ -21,7 +21,7 @@ function AuthedLayout() {
   const { user } = Route.useRouteContext();
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const [profile, setProfile] = useState<{ full_name: string | null; phone: string } | null>(null);
+  const [profile, setProfile] = useState<{ full_name: string | null; phone: string | null } | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
 
   useIdleLogout(true);
