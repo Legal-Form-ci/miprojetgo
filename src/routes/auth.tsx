@@ -11,9 +11,11 @@ export const Route = createFileRoute("/auth")({
   }),
   head: () => ({
     meta: [
-      { title: "MiProjet Go — Connexion" },
-      { name: "description", content: "L'app de gestion des entrepreneurs, commerçants et TPE." },
+      { title: "Connexion — MiPROJET Go" },
+      { name: "description", content: "Connectez-vous à MiPROJET Go pour piloter ventes, dépenses et stocks de votre activité, même hors ligne." },
+      { property: "og:url", content: "https://go.ivoireprojet.com/auth" },
     ],
+    links: [{ rel: "canonical", href: "https://go.ivoireprojet.com/auth" }],
   }),
   component: AuthPage,
 });
