@@ -81,6 +81,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { title: "MiPROJET Go — Gestion commerciale des TPE ivoiriennes" },
       { name: "description", content: "Enregistrez ventes, dépenses et stocks à la voix ou en un geste, même hors ligne. La solution MiPROJET pour maquis, boutiques, restaurants et artisans." },
       { name: "theme-color", content: "#1E4CA1" },
+      { name: "google-site-verification", content: "TOE_Dr61RHMj1BUaLTStOabze3btg4NXaycad7tmZUM" },
       { name: "apple-mobile-web-app-capable", content: "yes" },
       { name: "mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-status-bar-style", content: "default" },
