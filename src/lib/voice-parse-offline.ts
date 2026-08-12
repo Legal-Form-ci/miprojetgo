@@ -1,6 +1,7 @@
 // Fallback local : quand l'IA n'est pas joignable (hors ligne / 402 / 429),
 // on extrait les informations minimales par regex pour ne pas bloquer l'utilisateur.
 import type { VoiceParsedOperation } from "@/lib/voice-parse.functions";
+import { preTranslateLocal } from "@/lib/langues-locales";
 
 const FR_NUM: Record<string, number> = {
   zero: 0, un: 1, une: 1, deux: 2, trois: 3, quatre: 4, cinq: 5, six: 6,
@@ -56,21 +57,24 @@ function detectCategorie(text: string): string {
 
 export function parseVoiceOffline(transcript: string): VoiceParsedOperation {
   const text = transcript.trim();
-  const montant = extractMontant(text);
-  const type = detectType(text);
+  const local = preTranslateLocal(text);
+  const translated = local.text || text;
+  const montant = extractMontant(translated) || local.fcfa;
+  const type = detectType(translated);
   const description = text.length > 80 ? text.slice(0, 80) + "…" : text;
   return {
     type,
     montant,
     description: description || "Opération vocale",
-    categorie: detectCategorie(text),
-    mode_paiement: detectMode(text),
+    categorie: detectCategorie(translated),
+    mode_paiement: detectMode(translated),
     note: "Mode hors ligne — vérifier les détails",
     confidence: montant > 0 ? "moyenne" : "faible",
     raison: montant > 0
       ? "Analyse locale (hors ligne). Vérifie le montant et confirme."
       : "Montant non détecté hors ligne. Corrige avant d'enregistrer.",
-    lang: "fr",
+    lang: local.detected ?? "fr",
     price_source: "manuel",
+    local_terms: local.matched,
   };
 }
