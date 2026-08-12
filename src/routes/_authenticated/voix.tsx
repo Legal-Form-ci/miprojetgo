@@ -9,6 +9,14 @@ import { parseVoiceOffline } from "@/lib/voice-parse-offline";
 import { supabase } from "@/integrations/supabase/client";
 import { buildGreeting, getGreetingPrefs, shouldGreet } from "@/lib/voice-greeting";
 import { getQueue, subscribeQueue } from "@/lib/offline-queue";
+import {
+  LANGS as LOCAL_LANGS,
+  preTranslateLocal,
+  speechLocaleFor,
+  spokenRecap,
+  localPhrase,
+  type LocalLang,
+} from "@/lib/langues-locales";
 
 export const Route = createFileRoute("/_authenticated/voix")({
   head: () => ({ meta: [{ title: "Saisie vocale — MiProjet Go" }] }),
@@ -50,11 +58,10 @@ function speak(text: string, lang = "fr-FR") {
   }
 }
 
-const LANGS = [
-  { code: "fr-FR", label: "FR / Baoulé" },
-  { code: "en-US", label: "EN" },
-  { code: "es-ES", label: "ES" },
-];
+// Langues proposées : français, langues locales de Côte d'Ivoire (dioula, baoulé,
+// gouro, bété — reconnues via le canal fr-FR, aucun moteur natif n'existe),
+// plus anglais et espagnol.
+const LANGS = LOCAL_LANGS;
 
 // Supprime les répétitions consécutives ("deux deux deux bouteilles" -> "deux bouteilles")
 // et les segments répétés que la reconnaissance vocale peut accumuler.
@@ -91,7 +98,8 @@ function VoicePage() {
   const [result, setResult] = useState<VoiceParsedOperation | null>(null);
   const [supported, setSupported] = useState<boolean | null>(null);
   const [userName, setUserName] = useState("Entrepreneur");
-  const [lang, setLang] = useState("fr-FR");
+  const [lang, setLang] = useState<LocalLang>("fr");
+  const speechLocale = speechLocaleFor(lang);
   const [online, setOnline] = useState(true);
   const [pending, setPending] = useState(0);
   const recRef = useRef<SpeechRec | null>(null);
@@ -137,7 +145,9 @@ function VoicePage() {
   function greetOnce() {
     const prefs = getGreetingPrefs();
     if (!shouldGreet(prefs)) return;
-    speak(buildGreeting(prefs, userName), lang);
+    const hello = localPhrase("greeting", lang);
+    const base = buildGreeting(prefs, userName);
+    speak(hello ? `${hello} ${base}` : base, speechLocale);
   }
 
   function start() {
@@ -149,7 +159,7 @@ function VoicePage() {
     setInterim("");
     committedCountRef.current = 0;
     const rec = new Ctor();
-    rec.lang = lang;
+    rec.lang = speechLocale;
     rec.continuous = false; // push-to-talk : on s'arrête au premier silence
     rec.interimResults = true;
     rec.maxAlternatives = 1;
@@ -188,10 +198,12 @@ function VoicePage() {
   }
 
   async function analyze() {
-    const text = dedupeWords((transcript + " " + interim).trim());
+    const raw = dedupeWords((transcript + " " + interim).trim());
+    const text = raw;
     if (!text) return toast.error("Parle d'abord, puis appuie sur Analyser.");
     setAnalyzing(true);
     try {
+      const local = preTranslateLocal(text);
       let res: VoiceParsedOperation;
       try {
         res = await parse({ data: { transcript: text } });
@@ -200,6 +212,9 @@ function VoicePage() {
         console.warn("Fallback vocal local :", err);
         res = parseVoiceOffline(text);
         toast.warning("IA hors ligne — analyse locale. Vérifie avant d'enregistrer.");
+      }
+      if (local.matched.length) {
+        toast.info(`Langue locale reconnue : ${local.matched.slice(0, 4).join(" · ")}`);
       }
       // Validation stricte : rejette les lignes incohérentes
       if (!res.montant || res.montant <= 0) {
@@ -211,15 +226,12 @@ function VoicePage() {
         res.description = text.slice(0, 60);
       }
       setResult(res);
-      const lang = res.lang === "en" ? "en-US" : res.lang === "es" ? "es-ES" : "fr-FR";
+      const spokenLang = (res.lang ?? lang) as LocalLang;
+      const outLocale = speechLocaleFor(spokenLang);
       if (res.confidence === "faible" && res.raison) {
-        speak(res.raison, lang);
+        speak(res.raison, outLocale);
       } else {
-        const recap =
-          res.type === "entree"
-            ? `Vente de ${res.description} pour ${res.montant} francs. Confirme ?`
-            : `Achat de ${res.description} pour ${res.montant} francs. Confirme ?`;
-        speak(recap, lang);
+        speak(spokenRecap(spokenLang, res.type, res.description, res.montant), outLocale);
       }
     } catch (e) {
       toast.error((e as Error).message || "Analyse impossible.");
