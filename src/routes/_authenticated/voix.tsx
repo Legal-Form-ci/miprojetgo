@@ -307,7 +307,12 @@ function VoicePage() {
           {listening ? "J'écoute… appuie pour arrêter" : "Appuie et parle"}
         </p>
         <p className="text-[11px] opacity-75 mt-1">
-          Ex : « j'ai vendu 2 casiers de 66 à 6500 », « acheté 5 litres essence 4000 »
+          Ex : « j'ai vendu 2 casiers de 66 à 6500 » · Dioula « n ka biere fila feere kɛmɛ dɔrɔmɛ » ·
+          Baoulé « n toli akpɔ kun, kotoku nsan »
+        </p>
+        <p className="text-[10px] opacity-70 mt-1">
+          Dioula, baoulé, gouro et bété sont compris (micro réglé sur le canal fr-FR) — l'argent local
+          (dɔrɔmɛ, pɔnu, kotoku) est converti en FCFA automatiquement.
         </p>
         <div className="mt-3 flex justify-center gap-2">
           {LANGS.map((l) => (
