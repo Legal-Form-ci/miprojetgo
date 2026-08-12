@@ -1,6 +1,8 @@
 import { createFileRoute, useNavigate, useSearch } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
+import { signUpWithPhone } from "@/lib/auth.functions";
 import { LOGO_URL } from "@/lib/brand";
 import { toast } from "sonner";
 import { Loader2, Eye, EyeOff, Phone, Lock, User, Sparkles } from "lucide-react";
@@ -26,6 +28,7 @@ function phoneToEmail(phone: string) {
 
 function AuthPage() {
   const navigate = useNavigate();
+  const createAccount = useServerFn(signUpWithPhone);
   const { next } = useSearch({ from: "/auth" });
   const goNext = () => {
     if (next) window.location.href = next;
@@ -66,37 +69,21 @@ function AuthPage() {
     setLoading(true);
     const email = phoneToEmail(cleaned);
     if (mode === "signup") {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/dashboard`,
-          data: { full_name: fullName.trim(), phone: cleaned },
-        },
-      });
-      if (error) {
+      try {
+        await createAccount({ data: { fullName: fullName.trim(), phone: cleaned, password } });
+      } catch (err) {
         setLoading(false);
-        toast.error(error.message === "User already registered"
-          ? "Ce numéro a déjà un compte. Connecte-toi."
-          : "Création impossible : " + error.message);
+        toast.error((err as Error).message || "Création impossible");
         return;
       }
-      // Ecrit la fiche profil (si pas de trigger côté DB)
-      if (data.user) {
-        await supabase
-          .from("profiles")
-          .upsert({
-            id: data.user.id,
-            phone: cleaned,
-            full_name: fullName.trim(),
-          } as never, { onConflict: "id" });
-      }
-      // Auto-signin si session n'est pas ouverte (email confirm désactivé)
-      if (!data.session) {
-        await supabase.auth.signInWithPassword({ email, password });
-      }
+      const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
       setLoading(false);
-      toast.success("Compte créé. Bienvenue sur MiProjet Go !");
+      if (signInError) {
+        toast.error("Compte créé, mais connexion impossible. Réessaie de te connecter.");
+        setMode("login");
+        return;
+      }
+      toast.success("Compte créé. Bienvenue sur MiPROJET Go !");
       goNext();
       return;
     }
