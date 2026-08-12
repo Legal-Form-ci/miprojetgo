@@ -124,6 +124,14 @@ function esc(s: string) {
   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
+// Frontières de mot compatibles avec les caractères africains (ɛ, ɔ, ɲ, ŋ…) :
+// \b de JavaScript ne les reconnaît pas comme lettres.
+const B1 = "(?<![\\p{L}\\p{N}])";
+const B2 = "(?![\\p{L}\\p{N}])";
+function wordRe(form: string): RegExp {
+  return new RegExp(`${B1}${esc(form)}${B2}`, "giu");
+}
+
 export type LocalPreTranslation = {
   /** Texte enrichi en français, prêt pour l'IA ou le parseur hors ligne. */
   text: string;
@@ -151,26 +159,34 @@ export function preTranslateLocal(input: string): LocalPreTranslation {
   let fcfa = 0;
   for (const unit of MONEY_UNITS) {
     for (const form of unit.forms) {
-      const re = new RegExp(`(\\d+|[a-zɛɔɲŋ]+)\\s+${esc(form)}\\b`, "gi");
-      const m = re.exec(text);
-      if (!m) continue;
-      const qtyRaw = m[1];
-      const qty = /^\d+$/.test(qtyRaw)
-        ? Number(qtyRaw)
-        : NUMBERS.find((n) => n.forms.includes(qtyRaw))?.value ?? 1;
-      const amount = qty * unit.fcfa;
-      if (amount > fcfa) fcfa = amount;
-      matched.push(`${qtyRaw} ${form} = ${amount} FCFA`);
-      bump(unit.lang);
-      text = text.replace(re, ` ${amount} francs `);
+      // La quantité peut précéder (dioula : « kɛmɛ dɔrɔmɛ ») ou suivre
+      // (baoulé : « kotoku blu ») l'unité monétaire.
+      const before = new RegExp(`${B1}([\\p{L}\\p{N}]+)\\s+${esc(form)}${B2}`, "giu");
+      const after = new RegExp(`${B1}${esc(form)}\\s+([\\p{L}\\p{N}]+)${B2}`, "giu");
+      for (const re of [before, after]) {
+        const m = re.exec(text);
+        if (!m) continue;
+        const qtyRaw = m[1].toLowerCase();
+        const qty = /^\d+$/.test(qtyRaw)
+          ? Number(qtyRaw)
+          : NUMBERS.find((n) => n.forms.includes(qtyRaw))?.value ?? 0;
+        if (!qty) continue;
+        const amount = qty * unit.fcfa;
+        if (amount > fcfa) fcfa = amount;
+        matched.push(`${m[0].trim()} = ${amount} FCFA`);
+        bump(unit.lang);
+        text = text.replace(new RegExp(re.source, "giu"), ` ${amount} francs `);
+        break;
+      }
     }
   }
 
   // 2) Nombres locaux → chiffres
   for (const num of NUMBERS) {
     for (const form of num.forms) {
-      const re = new RegExp(`\\b${esc(form)}\\b`, "gi");
+      const re = wordRe(form);
       if (!re.test(text)) continue;
+      re.lastIndex = 0;
       matched.push(`${form} = ${num.value}`);
       bump(num.lang);
       text = text.replace(re, ` ${num.value} `);
@@ -180,8 +196,9 @@ export function preTranslateLocal(input: string): LocalPreTranslation {
   // 3) Lexique de commerce → français
   for (const entry of LEXICON) {
     for (const form of entry.forms) {
-      const re = new RegExp(`\\b${esc(form)}\\b`, "gi");
+      const re = wordRe(form);
       if (!re.test(text)) continue;
+      re.lastIndex = 0;
       matched.push(`${form} = ${entry.fr}`);
       bump(entry.lang);
       text = text.replace(re, ` ${entry.fr} `);
