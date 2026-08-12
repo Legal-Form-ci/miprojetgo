@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { preTranslateLocal, type LocalLang } from "@/lib/langues-locales";
 
 const inputSchema = z.object({
   transcript: z.string().trim().min(2).max(2000),
@@ -16,8 +17,10 @@ export type VoiceParsedOperation = {
   note: string | null;
   confidence: "haute" | "moyenne" | "faible";
   raison: string;
-  lang: "fr" | "en" | "es" | "bci";
+  lang: LocalLang;
   price_source: "ia" | "historique" | "manuel";
+  /** Termes en langue locale reconnus et traduits (traçabilité). */
+  local_terms?: string[];
 };
 
 const CATEGORIES = [
@@ -73,17 +76,23 @@ function dedupeDescription(text: string): string {
 }
 
 const SYSTEM_PROMPT = [
-  "Tu transformes une phrase parlee (francais, anglais, espagnol ou baoule de Cote d'Ivoire) en UNE operation financiere pour un commerce (cave, maquis, restaurant, bistro, boutique).",
+  "Tu transformes une phrase parlee en UNE operation financiere pour un commerce ivoirien (cave, maquis, restaurant, bistro, boutique).",
+  "Langues acceptees: francais (y compris nouchi/francais ivoirien), dioula (jula/bambara), baoule, gouro (kweni), bete, anglais, espagnol.",
   "",
   "Regles:",
-  "- Detecte la LANGUE: fr | en | es | bci (baoule). Pour le baoule, traduis mentalement en francais (ex: 'n yoli atɔlɛ'='j'ai vendu', 'n toli'='j'ai achete', 'akpɔ'='casier').",
+  "- Detecte la LANGUE: fr | dyu | bci | goa | bet | en | es. Traduis mentalement en francais avant d'extraire.",
+  "  Dioula: 'feere'=vendre, 'san'=acheter, 'sara'=payer, 'ta'=prendre, 'wari'=argent, 'da'/'sɔngɔ'=prix, 'joli'=combien, 'malo'=riz, 'jɛgɛ'=poisson, 'sogo'=viande. Nombres: kelen 1, fila 2, saba 3, naani 4, duuru 5, wɔɔrɔ 6, wolonwula 7, segin 8, kɔnɔntɔn 9, tan 10, mugan 20, kɛmɛ 100, waga 1000.",
+  "  Baoule: 'n yoli atɔlɛ'=j'ai vendu, 'n toli'=j'ai achete, 'sika'=argent, 'akpɔ'=casier. Nombres: kun 1, nnyɔn 2, nsan 3, nnan 4, nnun 5, nsiɛn 6, nso 7, mɔcuɛ 8, ngwlan 9, blu 10, ya 100, akpi 1000.",
+  "  Gouro et bete: langues mande-sud / krou de Cote d'Ivoire, traduis au mieux; si un mot est incertain, garde le produit tel quel dans la description en francais.",
+  "- ARGENT LOCAL (tres important): en dioula 1 'dɔrɔmɛ' = 5 FCFA (donc 'kɛmɛ dɔrɔmɛ' = 500 FCFA). En baoule l'unite comptee vaut 5 FCFA, 'pɔnu' = 25 FCFA, 'kotoku' = 1000 FCFA. Convertis toujours en FCFA.",
+  "- La phrase peut etre mal prononcee ou mal orthographiee par le micro: raisonne phonetiquement et retiens l'interpretation commerciale la plus plausible.",
   "- ENTREE: vente, vendu, paye, recu, encaisse, sold, vendi. SORTIE: achat, achete, pris, depense, fournisseur, carburant, bought, compre.",
   "- Calcule le montant total en FCFA. '2 casiers a 5000'=10000. 'casier de 66 a 6500'=6500. Si pas de prix mais un produit nomme: montant=0 (le serveur cherchera dans l'historique).",
   "- Description COURTE (3-8 mots) en FRANCAIS. Nettoie les repetitions ('deux deux bouteilles'='2 bouteilles').",
   "- Categorie parmi: Boissons (biere, vin, sucrerie, jus), Restauration (foutou, attieke, riz, plat), Viandes (boeuf, mouton, cabri, porc, poulet), Poissons, Legumes, Condiments (huile, tomate, oignon, magie, sel), Alimentation, Carburant, Divers, Autre.",
   "- Paiement parmi: Especes, Wave, MTN Money, Orange Money, Moov Money. Defaut: Especes.",
   "- Confidence: 'haute' si tout est clair, 'moyenne' si prix manque ou devine, 'faible' si phrase ambigue.",
-  "- Reponds UNIQUEMENT en JSON: {\"type\":\"entree|sortie\",\"montant\":number,\"description\":\"...\",\"categorie\":\"...\",\"mode_paiement\":\"...\",\"note\":null,\"confidence\":\"haute|moyenne|faible\",\"raison\":\"explication courte en francais\",\"lang\":\"fr|en|es|bci\"}.",
+  "- Reponds UNIQUEMENT en JSON: {\"type\":\"entree|sortie\",\"montant\":number,\"description\":\"...\",\"categorie\":\"...\",\"mode_paiement\":\"...\",\"note\":null,\"confidence\":\"haute|moyenne|faible\",\"raison\":\"explication courte en francais\",\"lang\":\"fr|dyu|bci|goa|bet|en|es\"}.",
 ].join("\n");
 
 export const parseVoiceOperation = createServerFn({ method: "POST" })
@@ -93,7 +102,8 @@ export const parseVoiceOperation = createServerFn({ method: "POST" })
     const key = process.env.LOVABLE_API_KEY;
     if (!key) return fallbackVoice(data.transcript);
 
-    const normalized = normalizeNumbers(data.transcript);
+    const local = preTranslateLocal(data.transcript);
+    const normalized = normalizeNumbers(local.text);
     let raw: unknown;
     // Fallback : GPT d'abord (Claude indisponible sur Lovable AI Gateway),
     // Gemini seulement si les modèles OpenAI échouent.
@@ -116,7 +126,15 @@ export const parseVoiceOperation = createServerFn({ method: "POST" })
             response_format: { type: "json_object" },
             messages: [
               { role: "system", content: SYSTEM_PROMPT },
-              { role: "user", content: `Phrase originale: "${data.transcript}"\nPhrase normalisee: "${normalized}"` },
+              {
+                role: "user",
+                content:
+                  `Phrase originale: "${data.transcript}"\n` +
+                  `Phrase normalisee (langues locales pre-traduites): "${normalized}"\n` +
+                  (local.matched.length ? `Termes locaux reconnus: ${local.matched.join(", ")}\n` : "") +
+                  (local.fcfa ? `Montant deduit d'une unite monetaire locale: ${local.fcfa} FCFA\n` : "") +
+                  (local.detected ? `Langue locale probable: ${local.detected}` : ""),
+              },
             ],
           }),
         });
@@ -142,6 +160,7 @@ export const parseVoiceOperation = createServerFn({ method: "POST" })
       const nums = normalized.match(/\d+(?:[.,]\d+)?/g)?.map(Number).filter((n) => n > 0) ?? [];
       if (nums.length) montant = Math.max(...nums);
     }
+    if (!montant && local.fcfa) montant = local.fcfa;
     const rawDesc = typeof parsed.description === "string" ? parsed.description.trim() : "";
     const description = dedupeDescription(rawDesc.length >= 2 ? rawDesc : data.transcript.slice(0, 80));
 
@@ -150,8 +169,9 @@ export const parseVoiceOperation = createServerFn({ method: "POST" })
     let confidence = ["haute", "moyenne", "faible"].includes(parsed.confidence as string)
       ? (parsed.confidence as "haute" | "moyenne" | "faible")
       : "moyenne";
-    const lang = (["fr", "en", "es", "bci"].includes(parsed.lang as string) ? parsed.lang : "fr") as
-      | "fr" | "en" | "es" | "bci";
+    const lang = ((["fr", "dyu", "bci", "goa", "bet", "en", "es"] as string[]).includes(parsed.lang as string)
+      ? parsed.lang
+      : local.detected ?? "fr") as LocalLang;
 
     let price_source: "ia" | "historique" | "manuel" = montant ? "ia" : "manuel";
     if (!montant && description.length >= 3) {
@@ -182,24 +202,27 @@ export const parseVoiceOperation = createServerFn({ method: "POST" })
       raison: raison.trim(),
       lang,
       price_source,
+      local_terms: local.matched,
     };
   });
 
 function fallbackVoice(transcript: string): VoiceParsedOperation {
-  const normalized = normalizeNumbers(transcript);
+  const local = preTranslateLocal(transcript);
+  const normalized = normalizeNumbers(local.text);
   const nums = normalized.match(/\d+(?:[.,]\d+)?/g)?.map((n) => Number(n.replace(",", "."))).filter((n) => n > 0) ?? [];
-  const type = /achat|achete|acheté|depense|dépense|sortie|fournisseur|carburant/i.test(transcript) ? "sortie" : "entree";
+  const type = /achat|achete|acheté|depense|dépense|sortie|fournisseur|carburant/i.test(normalized) ? "sortie" : "entree";
   return {
     type,
-    montant: nums.length ? Math.round(Math.max(...nums)) : 0,
+    montant: nums.length ? Math.round(Math.max(...nums)) : local.fcfa,
     description: dedupeDescription(transcript.slice(0, 80)) || "Operation vocale",
     categorie: "Divers",
     mode_paiement: "Especes",
     note: null,
     confidence: "faible",
     raison: "Analyse simplifiee utilisee. Verifie le montant et la description avant validation.",
-    lang: "fr",
+    lang: local.detected ?? "fr",
     price_source: nums.length ? "manuel" : "manuel",
+    local_terms: local.matched,
   };
 }
 
