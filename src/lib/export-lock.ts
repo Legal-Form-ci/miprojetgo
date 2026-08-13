@@ -1,9 +1,9 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { getExportEntitlement, redeemExportCode } from "@/lib/redeem-export.functions";
+import { getExportEntitlement, startWaveCheckout, syncWavePayment } from "@/lib/payments.functions";
 
 export type ExportPlan = {
-  id: string;
+  id: "mensuel" | "trimestre" | "annuel";
   label: string;
   price: string;
   period: string;
@@ -48,17 +48,32 @@ export function useExportUnlocked(): boolean {
   return !!data?.unlocked;
 }
 
-export function useUnlockExports() {
-  const qc = useQueryClient();
-  const redeem = useServerFn(redeemExportCode);
-  return async (code: string): Promise<boolean> => {
+export function useExportEntitlement() {
+  const fetchEntitlement = useServerFn(getExportEntitlement);
+  return useQuery({ queryKey: QK, queryFn: () => fetchEntitlement(), staleTime: 60_000 });
+}
+
+/** Lance un paiement Wave réel et renvoie l'URL de règlement. */
+export function usePayWithWave() {
+  const start = useServerFn(startWaveCheckout);
+  return async (plan: ExportPlan["id"]) => {
+    const res = await start({ data: { plan } });
     try {
-      const res = await redeem({ data: { code } });
-      if (!res?.ok) return false;
-      await qc.invalidateQueries({ queryKey: QK });
-      return true;
+      localStorage.setItem("mpg.wave.pending", res.reference);
     } catch {
-      return false;
+      /* noop */
     }
+    return res;
+  };
+}
+
+/** Vérifie auprès de Wave un paiement en attente (retour de checkout). */
+export function useCheckWavePayment() {
+  const qc = useQueryClient();
+  const sync = useServerFn(syncWavePayment);
+  return async (reference: string) => {
+    const res = await sync({ data: { reference } });
+    await qc.invalidateQueries({ queryKey: QK });
+    return res;
   };
 }
