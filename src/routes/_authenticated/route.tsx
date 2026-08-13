@@ -55,7 +55,7 @@ function AuthedLayout() {
   }
 
   const tabs: Array<{
-    to: "/dashboard" | "/operations" | "/historique" | "/import" | "/synchronisation" | "/utilisateurs" | "/voix" | "/profil" | "/produits" | "/parametres";
+    to: "/dashboard" | "/operations" | "/historique" | "/import" | "/synchronisation" | "/utilisateurs" | "/voix" | "/profil" | "/produits" | "/parametres" | "/paiements";
     label: string;
     icon: typeof LayoutDashboard;
     primary?: boolean;
@@ -67,6 +67,7 @@ function AuthedLayout() {
     { to: "/produits", label: "Produits", icon: Package },
     { to: "/historique", label: "Historique", icon: History },
     { to: "/parametres", label: "Réglages", icon: Settings, adminOnly: true },
+    { to: "/paiements", label: "Paiements", icon: CreditCard, adminOnly: true },
     { to: "/utilisateurs", label: "Équipe", icon: Users, adminOnly: true },
   ];
   const visibleTabs = tabs.filter((t) => !t.adminOnly || isAdmin);
