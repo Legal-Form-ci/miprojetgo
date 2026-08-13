@@ -8,7 +8,12 @@ import { ArrowDownCircle, ArrowUpCircle, Trash2, Search, Download, FileText, Fil
 import { openReceipt } from "@/lib/receipt";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
-import { useExportUnlocked, useUnlockExports, EXPORT_PLANS } from "@/lib/export-lock";
+import {
+  useExportUnlocked,
+  usePayWithWave,
+  useCheckWavePayment,
+  EXPORT_PLANS,
+} from "@/lib/export-lock";
 
 export const Route = createFileRoute("/_authenticated/historique")({
   head: () => ({ meta: [{ title: "Historique — MiProjet Go" }] }),
@@ -69,9 +74,10 @@ function History() {
   const [xlsxing, setXlsxing] = useState(false);
   const unlocked = useExportUnlocked();
   const [showUnlock, setShowUnlock] = useState(false);
-  const [code, setCode] = useState("");
-  const unlockExports = useUnlockExports();
-  const [redeeming, setRedeeming] = useState(false);
+  const payWithWave = usePayWithWave();
+  const checkWavePayment = useCheckWavePayment();
+  const [paying, setPaying] = useState<string | null>(null);
+  const [selectedPlan, setSelectedPlan] = useState<(typeof EXPORT_PLANS)[number]["id"]>("trimestre");
 
   function guardExport(action: () => void) {
     if (!unlocked) {
@@ -81,21 +87,42 @@ function History() {
     }
     action();
   }
-  async function submitCode() {
-    setRedeeming(true);
+  async function payPlan(plan: (typeof EXPORT_PLANS)[number]["id"]) {
+    setPaying(plan);
     try {
-      const ok = await unlockExports(code);
-      if (ok) {
-        toast.success("Exports débloqués. Merci !");
-        setShowUnlock(false);
-        setCode("");
-      } else {
-        toast.error("Code invalide. Vérifie auprès de MiProjet.");
-      }
+      const res = await payWithWave(plan);
+      toast.success("Redirection vers Wave…");
+      window.location.href = res.url;
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Paiement Wave indisponible.");
     } finally {
-      setRedeeming(false);
+      setPaying(null);
     }
   }
+
+  // Retour de Wave : on vérifie le paiement en attente côté serveur.
+  useEffect(() => {
+    let ref: string | null = null;
+    try {
+      ref = localStorage.getItem("mpg.wave.pending");
+    } catch {
+      ref = null;
+    }
+    if (!ref) return;
+    checkWavePayment(ref)
+      .then((res) => {
+        if (res.status === "completed") {
+          toast.success("Paiement Wave confirmé — exports débloqués.");
+          try {
+            localStorage.removeItem("mpg.wave.pending");
+          } catch {
+            /* noop */
+          }
+        }
+      })
+      .catch(() => undefined);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: u }) => {
@@ -312,9 +339,17 @@ function History() {
 
             <div className="grid gap-2">
               {EXPORT_PLANS.map((p) => (
-                <div
+                <button
                   key={p.id}
-                  className={`rounded-2xl border p-3 ${p.highlight ? "border-primary bg-primary/5" : "border-border bg-background"}`}
+                  type="button"
+                  onClick={() => setSelectedPlan(p.id)}
+                  className={`text-left rounded-2xl border p-3 transition ${
+                    selectedPlan === p.id
+                      ? "border-primary bg-primary/10 ring-2 ring-ring"
+                      : p.highlight
+                        ? "border-primary bg-primary/5"
+                        : "border-border bg-background"
+                  }`}
                 >
                   <div className="flex items-baseline justify-between gap-2">
                     <div className="font-semibold text-foreground text-sm">{p.label}</div>
@@ -330,24 +365,13 @@ function History() {
                       </li>
                     ))}
                   </ul>
-                </div>
+                </button>
               ))}
             </div>
 
-            <div className="rounded-xl bg-background border border-border p-3 space-y-2">
-              <label className="text-[11px] font-semibold uppercase tracking-wide text-foreground/80">
-                Code MiProjet
-              </label>
-              <input
-                value={code}
-                onChange={(e) => setCode(e.target.value)}
-                placeholder="MPG-…"
-                className="w-full h-11 px-3 rounded-xl bg-card border border-border focus:outline-none focus:ring-2 focus:ring-ring text-sm uppercase tracking-widest"
-              />
-              <p className="text-[10px] text-muted-foreground">
-                MiProjet t'envoie un code après paiement du forfait choisi.
-              </p>
-            </div>
+            <p className="text-[10px] text-muted-foreground text-center">
+              Paiement sécurisé Wave. Le déblocage est automatique dès confirmation.
+            </p>
 
             <div className="flex gap-2">
               <button
@@ -357,12 +381,12 @@ function History() {
                 Plus tard
               </button>
               <button
-                onClick={submitCode}
-                disabled={!code.trim() || redeeming}
+                onClick={() => payPlan(selectedPlan)}
+                disabled={!!paying}
                 className="flex-1 h-11 rounded-xl text-primary-foreground text-sm font-semibold disabled:opacity-60"
                 style={{ background: "var(--gradient-primary)" }}
               >
-                {redeeming ? "Vérification…" : "Débloquer"}
+                {paying ? "Ouverture Wave…" : "Payer avec Wave"}
               </button>
             </div>
           </div>

@@ -19,6 +19,7 @@ import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } fr
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedHistoriqueRouteImport } from './routes/_authenticated/historique'
 import { Route as AuthenticatedImportRouteImport } from './routes/_authenticated/import'
+import { Route as AuthenticatedPaiementsRouteImport } from './routes/_authenticated/paiements'
 import { Route as AuthenticatedParametresRouteImport } from './routes/_authenticated/parametres'
 import { Route as AuthenticatedProduitsRouteImport } from './routes/_authenticated/produits'
 import { Route as AuthenticatedProfilRouteImport } from './routes/_authenticated/profil'
@@ -29,6 +30,7 @@ import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as AuthenticatedOperationsIndexRouteImport } from './routes/_authenticated/operations.index'
 import { Route as AuthenticatedOperationsNewRouteImport } from './routes/_authenticated/operations.new'
+import { Route as ApiPublicWaveWebhookRouteImport } from './routes/api/public/wave-webhook'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -79,6 +81,11 @@ const AuthenticatedHistoriqueRoute = AuthenticatedHistoriqueRouteImport.update({
 const AuthenticatedImportRoute = AuthenticatedImportRouteImport.update({
   id: '/import',
   path: '/import',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedPaiementsRoute = AuthenticatedPaiementsRouteImport.update({
+  id: '/paiements',
+  path: '/paiements',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedParametresRoute = AuthenticatedParametresRouteImport.update({
@@ -136,6 +143,11 @@ const AuthenticatedOperationsNewRoute =
     path: '/operations/new',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const ApiPublicWaveWebhookRoute = ApiPublicWaveWebhookRouteImport.update({
+  id: '/api/public/wave-webhook',
+  path: '/api/public/wave-webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -147,6 +159,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/historique': typeof AuthenticatedHistoriqueRoute
   '/import': typeof AuthenticatedImportRoute
+  '/paiements': typeof AuthenticatedPaiementsRoute
   '/parametres': typeof AuthenticatedParametresRoute
   '/produits': typeof AuthenticatedProduitsRoute
   '/profil': typeof AuthenticatedProfilRoute
@@ -156,6 +169,7 @@ export interface FileRoutesByFullPath {
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/operations/new': typeof AuthenticatedOperationsNewRoute
+  '/api/public/wave-webhook': typeof ApiPublicWaveWebhookRoute
   '/operations/': typeof AuthenticatedOperationsIndexRoute
 }
 export interface FileRoutesByTo {
@@ -168,6 +182,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/historique': typeof AuthenticatedHistoriqueRoute
   '/import': typeof AuthenticatedImportRoute
+  '/paiements': typeof AuthenticatedPaiementsRoute
   '/parametres': typeof AuthenticatedParametresRoute
   '/produits': typeof AuthenticatedProduitsRoute
   '/profil': typeof AuthenticatedProfilRoute
@@ -177,6 +192,7 @@ export interface FileRoutesByTo {
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/operations/new': typeof AuthenticatedOperationsNewRoute
+  '/api/public/wave-webhook': typeof ApiPublicWaveWebhookRoute
   '/operations': typeof AuthenticatedOperationsIndexRoute
 }
 export interface FileRoutesById {
@@ -191,6 +207,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/historique': typeof AuthenticatedHistoriqueRoute
   '/_authenticated/import': typeof AuthenticatedImportRoute
+  '/_authenticated/paiements': typeof AuthenticatedPaiementsRoute
   '/_authenticated/parametres': typeof AuthenticatedParametresRoute
   '/_authenticated/produits': typeof AuthenticatedProduitsRoute
   '/_authenticated/profil': typeof AuthenticatedProfilRoute
@@ -200,6 +217,7 @@ export interface FileRoutesById {
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/_authenticated/operations/new': typeof AuthenticatedOperationsNewRoute
+  '/api/public/wave-webhook': typeof ApiPublicWaveWebhookRoute
   '/_authenticated/operations/': typeof AuthenticatedOperationsIndexRoute
 }
 export interface FileRouteTypes {
@@ -214,6 +232,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/historique'
     | '/import'
+    | '/paiements'
     | '/parametres'
     | '/produits'
     | '/profil'
@@ -223,6 +242,7 @@ export interface FileRouteTypes {
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/operations/new'
+    | '/api/public/wave-webhook'
     | '/operations/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -235,6 +255,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/historique'
     | '/import'
+    | '/paiements'
     | '/parametres'
     | '/produits'
     | '/profil'
@@ -244,6 +265,7 @@ export interface FileRouteTypes {
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/operations/new'
+    | '/api/public/wave-webhook'
     | '/operations'
   id:
     | '__root__'
@@ -257,6 +279,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/_authenticated/historique'
     | '/_authenticated/import'
+    | '/_authenticated/paiements'
     | '/_authenticated/parametres'
     | '/_authenticated/produits'
     | '/_authenticated/profil'
@@ -266,6 +289,7 @@ export interface FileRouteTypes {
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/_authenticated/operations/new'
+    | '/api/public/wave-webhook'
     | '/_authenticated/operations/'
   fileRoutesById: FileRoutesById
 }
@@ -279,6 +303,7 @@ export interface RootRouteChildren {
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
+  ApiPublicWaveWebhookRoute: typeof ApiPublicWaveWebhookRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -353,6 +378,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedImportRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/paiements': {
+      id: '/_authenticated/paiements'
+      path: '/paiements'
+      fullPath: '/paiements'
+      preLoaderRoute: typeof AuthenticatedPaiementsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/parametres': {
       id: '/_authenticated/parametres'
       path: '/parametres'
@@ -423,6 +455,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedOperationsNewRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/public/wave-webhook': {
+      id: '/api/public/wave-webhook'
+      path: '/api/public/wave-webhook'
+      fullPath: '/api/public/wave-webhook'
+      preLoaderRoute: typeof ApiPublicWaveWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -430,6 +469,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedHistoriqueRoute: typeof AuthenticatedHistoriqueRoute
   AuthenticatedImportRoute: typeof AuthenticatedImportRoute
+  AuthenticatedPaiementsRoute: typeof AuthenticatedPaiementsRoute
   AuthenticatedParametresRoute: typeof AuthenticatedParametresRoute
   AuthenticatedProduitsRoute: typeof AuthenticatedProduitsRoute
   AuthenticatedProfilRoute: typeof AuthenticatedProfilRoute
@@ -444,6 +484,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedHistoriqueRoute: AuthenticatedHistoriqueRoute,
   AuthenticatedImportRoute: AuthenticatedImportRoute,
+  AuthenticatedPaiementsRoute: AuthenticatedPaiementsRoute,
   AuthenticatedParametresRoute: AuthenticatedParametresRoute,
   AuthenticatedProduitsRoute: AuthenticatedProduitsRoute,
   AuthenticatedProfilRoute: AuthenticatedProfilRoute,
@@ -468,6 +509,7 @@ const rootRouteChildren: RootRouteChildren = {
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
+  ApiPublicWaveWebhookRoute: ApiPublicWaveWebhookRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

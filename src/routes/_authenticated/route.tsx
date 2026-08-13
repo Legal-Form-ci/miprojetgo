@@ -1,7 +1,7 @@
 import { createFileRoute, Outlet, redirect, Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
-import { LayoutDashboard, PlusCircle, History, LogOut, Users, Mic, User as UserIcon, Package, Settings } from "lucide-react";
+import { LayoutDashboard, PlusCircle, History, LogOut, Users, Mic, User as UserIcon, Package, Settings, CreditCard } from "lucide-react";
 import { LOGO_URL } from "@/lib/brand";
 import { SyncBanner } from "@/components/sync-banner";
 import { useIdleLogout } from "@/hooks/use-idle-logout";
@@ -55,7 +55,7 @@ function AuthedLayout() {
   }
 
   const tabs: Array<{
-    to: "/dashboard" | "/operations" | "/historique" | "/import" | "/synchronisation" | "/utilisateurs" | "/voix" | "/profil" | "/produits" | "/parametres";
+    to: "/dashboard" | "/operations" | "/historique" | "/import" | "/synchronisation" | "/utilisateurs" | "/voix" | "/profil" | "/produits" | "/parametres" | "/paiements";
     label: string;
     icon: typeof LayoutDashboard;
     primary?: boolean;
@@ -67,6 +67,7 @@ function AuthedLayout() {
     { to: "/produits", label: "Produits", icon: Package },
     { to: "/historique", label: "Historique", icon: History },
     { to: "/parametres", label: "Réglages", icon: Settings, adminOnly: true },
+    { to: "/paiements", label: "Paiements", icon: CreditCard, adminOnly: true },
     { to: "/utilisateurs", label: "Équipe", icon: Users, adminOnly: true },
   ];
   const visibleTabs = tabs.filter((t) => !t.adminOnly || isAdmin);
