@@ -75,6 +75,89 @@ export const LEXICON: Entry[] = [
   { lang: "bci", fr: "viande", forms: ["nnɛn", "nnen"] },
 ];
 
+/**
+ * Extension terrain : verbes, argent et produits supplémentaires
+ * (dioula, baoulé) + premiers lexiques gouro (kweni) et bété (daloa/gagnoa).
+ * Sources : Lexique dioula Braconnier & Derive ; « Les nombres et l'argent »
+ * (coastsystems.net) ; dictionnaire gouro-français (Kuznetsova, Mandenkan) ;
+ * lexiques bété krou (Zogbo, Marchese).
+ */
+export const LEXICON_EXT: Entry[] = [
+  // ——— Dioula (compléments commerce)
+  { lang: "dyu", fr: "vendu", forms: ["n ye feere", "n ka feere", "feerela", "feereli"] },
+  { lang: "dyu", fr: "acheté", forms: ["n ye san", "sanni", "sanli"] },
+  { lang: "dyu", fr: "reste", forms: ["tɔ", "to", "tola"] },
+  { lang: "dyu", fr: "crédit", forms: ["juru", "djourou"] },
+  { lang: "dyu", fr: "bénéfice", forms: ["tɔnɔ", "tono"] },
+  { lang: "dyu", fr: "client", forms: ["sannikɛla", "sanikela", "kiliyan"] },
+  { lang: "dyu", fr: "bouteille", forms: ["butɛli", "buteli", "boutéli"] },
+  { lang: "dyu", fr: "casier", forms: ["kaje", "kase", "kasiye"] },
+  { lang: "dyu", fr: "bière", forms: ["biyɛri", "biyeri", "dolo"] },
+  { lang: "dyu", fr: "huile", forms: ["tulu", "toulou"] },
+  { lang: "dyu", fr: "tomate", forms: ["tomati", "tomatu"] },
+  { lang: "dyu", fr: "oignon", forms: ["jaba", "djaba"] },
+  { lang: "dyu", fr: "sel", forms: ["kɔgɔ", "kogo"] },
+  { lang: "dyu", fr: "sucre", forms: ["sukaro", "soukaro"] },
+  { lang: "dyu", fr: "pain", forms: ["buru", "bourou"] },
+  { lang: "dyu", fr: "poulet", forms: ["sise", "shishè", "sisɛ"] },
+  { lang: "dyu", fr: "igname", forms: ["ku", "kou"] },
+  { lang: "dyu", fr: "banane", forms: ["banaku", "namasa"] },
+  { lang: "dyu", fr: "charbon", forms: ["kaman", "kamanjɛ"] },
+  { lang: "dyu", fr: "essence", forms: ["esansi", "essanci"] },
+  { lang: "dyu", fr: "aujourd'hui", forms: ["bi", "bii"] },
+  { lang: "dyu", fr: "hier", forms: ["kunun", "kounoun"] },
+  { lang: "dyu", fr: "matin", forms: ["sɔgɔma", "sogoma"] },
+  { lang: "dyu", fr: "soir", forms: ["wula", "woula"] },
+
+  // ——— Baoulé (compléments commerce)
+  { lang: "bci", fr: "payé", forms: ["kaci", "n kaci", "tuali"] },
+  { lang: "bci", fr: "prix", forms: ["ɲanmiɛn sika", "i ti", "ti"] },
+  { lang: "bci", fr: "combien", forms: ["nzɛ", "nze", "sɛ", "ngue"] },
+  { lang: "bci", fr: "crédit", forms: ["kalɛ", "kale"] },
+  { lang: "bci", fr: "marché", forms: ["gua", "goua", "guaa"] },
+  { lang: "bci", fr: "bière", forms: ["biya", "nzan", "nzán"] },
+  { lang: "bci", fr: "riz", forms: ["ɛmɔlɛ", "emole", "mɔlɛ"] },
+  { lang: "bci", fr: "banane", forms: ["kwadu", "kouadou"] },
+  { lang: "bci", fr: "manioc", forms: ["agba", "bɛdɛ", "bede"] },
+  { lang: "bci", fr: "poulet", forms: ["akɔ", "ako"] },
+  { lang: "bci", fr: "huile", forms: ["ngo", "ngoo"] },
+  { lang: "bci", fr: "sel", forms: ["nnyin", "nyin"] },
+  { lang: "bci", fr: "bouteille", forms: ["butɛli", "boutéli"] },
+
+  // ——— Gouro / kweni (mandé-sud)
+  { lang: "goa", fr: "vendu", forms: ["fere", "féré", "fele", "a fere"] },
+  { lang: "goa", fr: "acheté", forms: ["sa", "saa", "a sa"] },
+  { lang: "goa", fr: "argent", forms: ["wari", "wali", "waari"] },
+  { lang: "goa", fr: "prix", forms: ["sɔnɔ", "sono"] },
+  { lang: "goa", fr: "payé", forms: ["sara", "sala"] },
+  { lang: "goa", fr: "combien", forms: ["ye", "yle", "jɔlɛ"] },
+  { lang: "goa", fr: "riz", forms: ["blo", "bloo"] },
+  { lang: "goa", fr: "eau", forms: ["yi", "yii"] },
+  { lang: "goa", fr: "viande", forms: ["sonu", "soonu"] },
+  { lang: "goa", fr: "poisson", forms: ["gye", "gyee", "jɛ"] },
+  { lang: "goa", fr: "marché", forms: ["lo", "loo", "logo"] },
+  { lang: "goa", fr: "igname", forms: ["ku", "kuu"] },
+  { lang: "goa", fr: "bière", forms: ["dolo", "doolo"] },
+
+  // ——— Bété (krou)
+  { lang: "bet", fr: "vendu", forms: ["ylɩ", "yli", "yri", "a yli"] },
+  { lang: "bet", fr: "acheté", forms: ["kpa", "kpaa", "a kpa"] },
+  { lang: "bet", fr: "argent", forms: ["sɛkɛ", "seke", "gble"] },
+  { lang: "bet", fr: "prix", forms: ["gbɛ", "gbe"] },
+  { lang: "bet", fr: "payé", forms: ["pɛ", "pe", "pae"] },
+  { lang: "bet", fr: "combien", forms: ["nyɛ", "nye", "nyee"] },
+  { lang: "bet", fr: "eau", forms: ["nyu", "nyuu", "nyou"] },
+  { lang: "bet", fr: "riz", forms: ["mlo", "mloo"] },
+  { lang: "bet", fr: "viande", forms: ["nɛmɩ", "nemi", "nami"] },
+  { lang: "bet", fr: "poisson", forms: ["gyɛ", "gye", "djè"] },
+  { lang: "bet", fr: "igname", forms: ["dou", "duu"] },
+  { lang: "bet", fr: "marché", forms: ["gwa", "gwaa"] },
+  { lang: "bet", fr: "bière", forms: ["dolo", "koutoukou"] },
+];
+
+/** Lexique complet utilisé par le moteur. */
+export const ALL_LEXICON: Entry[] = [...LEXICON, ...LEXICON_EXT];
+
 /** Nombres locaux → chiffres. */
 export const NUMBERS: Array<{ lang: LocalLang; forms: string[]; value: number }> = [
   // Dioula
@@ -107,6 +190,39 @@ export const NUMBERS: Array<{ lang: LocalLang; forms: string[]; value: number }>
   { lang: "bci", value: 1000, forms: ["akpi"] },
 ];
 
+/** Nombres gouro et bété (1-10, centaines, milliers). */
+export const NUMBERS_EXT: Array<{ lang: LocalLang; forms: string[]; value: number }> = [
+  // Gouro (kweni)
+  { lang: "goa", value: 1, forms: ["do", "doo"] },
+  { lang: "goa", value: 2, forms: ["pla", "plaa", "pila"] },
+  { lang: "goa", value: 3, forms: ["yaka", "yaaka"] },
+  { lang: "goa", value: 4, forms: ["ziɛ", "zie"] },
+  { lang: "goa", value: 5, forms: ["su", "suu", "sou"] },
+  { lang: "goa", value: 6, forms: ["salo", "saalo"] },
+  { lang: "goa", value: 7, forms: ["sapla", "saapla"] },
+  { lang: "goa", value: 8, forms: ["sayaka"] },
+  { lang: "goa", value: 9, forms: ["saziɛ", "sazie"] },
+  { lang: "goa", value: 10, forms: ["vu", "vuu", "bu"] },
+  { lang: "goa", value: 100, forms: ["kɛmɛ", "keme"] },
+  { lang: "goa", value: 1000, forms: ["waga", "waka"] },
+  // Bété (krou)
+  { lang: "bet", value: 1, forms: ["bublɔ", "bublo", "bulo"] },
+  { lang: "bet", value: 2, forms: ["sɔ", "so", "soo"] },
+  { lang: "bet", value: 3, forms: ["ta", "taa"] },
+  { lang: "bet", value: 4, forms: ["mɔnɩ", "moni", "mona"] },
+  { lang: "bet", value: 5, forms: ["gbʋ", "gbu", "gbou"] },
+  { lang: "bet", value: 6, forms: ["gbʋdʋ", "gbudu"] },
+  { lang: "bet", value: 7, forms: ["gbʋsɔ", "gbuso"] },
+  { lang: "bet", value: 8, forms: ["gbʋta", "gbuta"] },
+  { lang: "bet", value: 9, forms: ["gbʋmɔnɩ", "gbumoni"] },
+  { lang: "bet", value: 10, forms: ["kugbʋ", "kougbou", "kugbu"] },
+  { lang: "bet", value: 100, forms: ["kɛmɛ", "keme"] },
+  { lang: "bet", value: 1000, forms: ["akpi", "waga"] },
+];
+
+/** Tous les nombres locaux (dioula, baoulé, gouro, bété). */
+export const ALL_NUMBERS = [...NUMBERS, ...NUMBERS_EXT];
+
 /**
  * Unités monétaires locales → FCFA.
  * Dioula : 1 dɔrɔmɛ = 5 F. Baoulé : l'unité comptée est 5 F,
@@ -119,6 +235,17 @@ export const MONEY_UNITS: Array<{ lang: LocalLang; forms: string[]; fcfa: number
   { lang: "bci", fcfa: 1000, forms: ["kotoku", "kotokun", "kotokou"] },
   { lang: "bci", fcfa: 5, forms: ["ba blu kun"] },
 ];
+
+/** Unités monétaires gouro / bété (base 5 F comme partout en zone CFA locale). */
+export const MONEY_UNITS_EXT: Array<{ lang: LocalLang; forms: string[]; fcfa: number }> = [
+  { lang: "goa", fcfa: 5, forms: ["dɔrɔmɛ", "dorome", "loloma"] },
+  { lang: "goa", fcfa: 1000, forms: ["waga do", "waka do"] },
+  { lang: "bet", fcfa: 5, forms: ["dɔlɔmɛ", "dolome", "dorome"] },
+  { lang: "bet", fcfa: 1000, forms: ["akpi bublɔ", "akpi bublo"] },
+];
+
+/** Toutes les unités monétaires locales. */
+export const ALL_MONEY_UNITS = [...MONEY_UNITS, ...MONEY_UNITS_EXT];
 
 function esc(s: string) {
   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
