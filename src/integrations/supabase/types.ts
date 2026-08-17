@@ -965,6 +965,51 @@ export type Database = {
         }
         Relationships: []
       }
+      go_sync_runs: {
+        Row: {
+          actor_id: string | null
+          created_at: string
+          details: Json
+          error: string | null
+          id: string
+          modules_pushed: number
+          roles_pushed: number
+          settings_pushed: number
+          signal_id: string | null
+          status: string
+          trigger: string
+          updated_at: string
+        }
+        Insert: {
+          actor_id?: string | null
+          created_at?: string
+          details?: Json
+          error?: string | null
+          id?: string
+          modules_pushed?: number
+          roles_pushed?: number
+          settings_pushed?: number
+          signal_id?: string | null
+          status?: string
+          trigger?: string
+          updated_at?: string
+        }
+        Update: {
+          actor_id?: string | null
+          created_at?: string
+          details?: Json
+          error?: string | null
+          id?: string
+          modules_pushed?: number
+          roles_pushed?: number
+          settings_pushed?: number
+          signal_id?: string | null
+          status?: string
+          trigger?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       import_sessions: {
         Row: {
           created_at: string
