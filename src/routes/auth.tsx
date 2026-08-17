@@ -72,8 +72,16 @@ function AuthPage() {
       try {
         await createAccount({ data: { fullName: fullName.trim(), phone: cleaned, password } });
       } catch (err) {
+        // Le numéro existe déjà : on tente directement la connexion avec ce mot de passe.
+        const { error: existingError } = await supabase.auth.signInWithPassword({ email, password });
         setLoading(false);
+        if (!existingError) {
+          toast.success("Tu as déjà un compte — te voilà connecté !");
+          goNext();
+          return;
+        }
         toast.error((err as Error).message || "Création impossible");
+        setMode("login");
         return;
       }
       const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
