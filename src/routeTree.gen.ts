@@ -30,6 +30,7 @@ import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as AuthenticatedOperationsIndexRouteImport } from './routes/_authenticated/operations.index'
 import { Route as AuthenticatedOperationsNewRouteImport } from './routes/_authenticated/operations.new'
+import { Route as ApiPublicRegisterRouteImport } from './routes/api/public/register'
 import { Route as ApiPublicWaveWebhookRouteImport } from './routes/api/public/wave-webhook'
 
 const IndexRoute = IndexRouteImport.update({
@@ -143,6 +144,11 @@ const AuthenticatedOperationsNewRoute =
     path: '/operations/new',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const ApiPublicRegisterRoute = ApiPublicRegisterRouteImport.update({
+  id: '/api/public/register',
+  path: '/api/public/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicWaveWebhookRoute = ApiPublicWaveWebhookRouteImport.update({
   id: '/api/public/wave-webhook',
   path: '/api/public/wave-webhook',
@@ -169,6 +175,7 @@ export interface FileRoutesByFullPath {
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/operations/new': typeof AuthenticatedOperationsNewRoute
+  '/api/public/register': typeof ApiPublicRegisterRoute
   '/api/public/wave-webhook': typeof ApiPublicWaveWebhookRoute
   '/operations/': typeof AuthenticatedOperationsIndexRoute
 }
@@ -192,6 +199,7 @@ export interface FileRoutesByTo {
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/operations/new': typeof AuthenticatedOperationsNewRoute
+  '/api/public/register': typeof ApiPublicRegisterRoute
   '/api/public/wave-webhook': typeof ApiPublicWaveWebhookRoute
   '/operations': typeof AuthenticatedOperationsIndexRoute
 }
@@ -217,6 +225,7 @@ export interface FileRoutesById {
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/_authenticated/operations/new': typeof AuthenticatedOperationsNewRoute
+  '/api/public/register': typeof ApiPublicRegisterRoute
   '/api/public/wave-webhook': typeof ApiPublicWaveWebhookRoute
   '/_authenticated/operations/': typeof AuthenticatedOperationsIndexRoute
 }
@@ -242,6 +251,7 @@ export interface FileRouteTypes {
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/operations/new'
+    | '/api/public/register'
     | '/api/public/wave-webhook'
     | '/operations/'
   fileRoutesByTo: FileRoutesByTo
@@ -265,6 +275,7 @@ export interface FileRouteTypes {
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/operations/new'
+    | '/api/public/register'
     | '/api/public/wave-webhook'
     | '/operations'
   id:
@@ -289,6 +300,7 @@ export interface FileRouteTypes {
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/_authenticated/operations/new'
+    | '/api/public/register'
     | '/api/public/wave-webhook'
     | '/_authenticated/operations/'
   fileRoutesById: FileRoutesById
@@ -303,6 +315,7 @@ export interface RootRouteChildren {
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
+  ApiPublicRegisterRoute: typeof ApiPublicRegisterRoute
   ApiPublicWaveWebhookRoute: typeof ApiPublicWaveWebhookRoute
 }
 
@@ -455,6 +468,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedOperationsNewRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/public/register': {
+      id: '/api/public/register'
+      path: '/api/public/register'
+      fullPath: '/api/public/register'
+      preLoaderRoute: typeof ApiPublicRegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/wave-webhook': {
       id: '/api/public/wave-webhook'
       path: '/api/public/wave-webhook'
@@ -509,6 +529,7 @@ const rootRouteChildren: RootRouteChildren = {
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
+  ApiPublicRegisterRoute: ApiPublicRegisterRoute,
   ApiPublicWaveWebhookRoute: ApiPublicWaveWebhookRoute,
 }
 export const routeTree = rootRouteImport

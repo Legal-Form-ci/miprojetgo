@@ -1,8 +1,6 @@
 import { createFileRoute, useNavigate, useSearch } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
-import { signUpWithPhone } from "@/lib/auth.functions";
 import { LOGO_URL } from "@/lib/brand";
 import { toast } from "sonner";
 import { Loader2, Eye, EyeOff, Phone, Lock, User, Sparkles } from "lucide-react";
@@ -28,7 +26,6 @@ function phoneToEmail(phone: string) {
 
 function AuthPage() {
   const navigate = useNavigate();
-  const createAccount = useServerFn(signUpWithPhone);
   const { next } = useSearch({ from: "/auth" });
   const goNext = () => {
     if (next) window.location.href = next;
@@ -70,18 +67,29 @@ function AuthPage() {
     const email = phoneToEmail(cleaned);
     if (mode === "signup") {
       try {
-        await createAccount({ data: { fullName: fullName.trim(), phone: cleaned, password } });
-      } catch (err) {
-        // Le numéro existe déjà : on tente directement la connexion avec ce mot de passe.
-        const { error: existingError } = await supabase.auth.signInWithPassword({ email, password });
-        setLoading(false);
-        if (!existingError) {
-          toast.success("Tu as déjà un compte — te voilà connecté !");
-          goNext();
-          return;
+        const response = await fetch("/api/public/register", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ fullName: fullName.trim(), phone: cleaned, password }),
+        });
+        const result = (await response.json().catch(() => null)) as
+          | { error?: string; code?: string }
+          | null;
+        if (!response.ok) {
+          if (result?.code === "account_exists") {
+            const { error: existingError } = await supabase.auth.signInWithPassword({ email, password });
+            if (!existingError) {
+              setLoading(false);
+              toast.success("Tu as déjà un compte — te voilà connecté !");
+              goNext();
+              return;
+            }
+          }
+          throw new Error(result?.error ?? "Création impossible. Réessaie dans un instant.");
         }
+      } catch (err) {
+        setLoading(false);
         toast.error((err as Error).message || "Création impossible");
-        setMode("login");
         return;
       }
       const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
