@@ -3,8 +3,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState, type FormEvent, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { createVendorAccount } from "@/lib/admin.functions";
-import { Users, Shield, User as UserIcon, Loader2, PlusCircle } from "lucide-react";
+import { createVendorAccount, listUsersOverview, syncUserNow } from "@/lib/admin.functions";
+import { Users, Shield, User as UserIcon, Loader2, PlusCircle, RefreshCcw, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/utilisateurs")({
@@ -28,19 +28,14 @@ type Row = { id: string; full_name: string | null; phone: string; created_at: st
 function UtilisateursPage() {
   const qc = useQueryClient();
   const createVendor = useServerFn(createVendorAccount);
+  const listUsers = useServerFn(listUsersOverview);
+  const syncUser = useServerFn(syncUserNow);
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const { data, isLoading } = useQuery({
     queryKey: ["users-overview"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("users_overview" as never)
-        .select("*")
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      return (data ?? []) as unknown as Row[];
-    },
+    queryFn: () => listUsers() as Promise<Row[]>,
   });
 
   const createMutation = useMutation({
@@ -53,6 +48,14 @@ function UtilisateursPage() {
       qc.invalidateQueries({ queryKey: ["users-overview"] });
     },
     onError: (error: Error) => toast.error(error.message || "Création impossible"),
+  });
+  const syncMutation = useMutation({
+    mutationFn: (userId: string) => syncUser({ data: { userId } }),
+    onSuccess: () => {
+      toast.success("Utilisateur envoyé à l’écosystème et journalisé.");
+      qc.invalidateQueries({ queryKey: ["users-overview"] });
+    },
+    onError: (error: Error) => toast.error(error.message || "Synchronisation impossible"),
   });
 
   function submit(e: FormEvent) {
@@ -138,14 +141,32 @@ function UtilisateursPage() {
                   <div className="font-semibold text-foreground truncate">{u.full_name ?? "—"}</div>
                   <div className="text-[11px] text-muted-foreground tabular-nums">{u.phone}</div>
                 </div>
-                <span className={`text-[10px] font-bold uppercase tracking-wide px-2 py-1 rounded-full ${isAdmin ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
-                  {isAdmin ? "Admin" : "Vendeur"}
-                </span>
+                <div className="flex flex-col items-end gap-1.5">
+                  <span className={`text-[10px] font-bold uppercase tracking-wide px-2 py-1 rounded-full ${isAdmin ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
+                    {isAdmin ? "Admin" : u.roles.includes("vendeur") ? "Vendeur" : "Responsable"}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => syncMutation.mutate(u.id)}
+                    disabled={syncMutation.isPending && syncMutation.variables === u.id}
+                    className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-border px-2 text-[11px] font-semibold text-primary hover:bg-primary/5 disabled:opacity-60"
+                  >
+                    {syncMutation.isPending && syncMutation.variables === u.id
+                      ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      : <RefreshCcw className="h-3.5 w-3.5" />}
+                    Synchroniser maintenant
+                  </button>
+                </div>
               </li>
             );
           })}
         </ul>
       )}
+
+      <div className="flex items-center gap-2 rounded-xl border border-primary/20 bg-primary/5 p-3 text-xs text-foreground">
+        <CheckCircle2 className="h-4 w-4 shrink-0 text-primary" />
+        Les nouveaux comptes apparaissent ici dès leur création. La relance crée un nouveau signal audité pour l’écosystème.
+      </div>
 
     </div>
   );

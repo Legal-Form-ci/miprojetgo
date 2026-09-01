@@ -3,7 +3,8 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { LOGO_URL } from "@/lib/brand";
 import { toast } from "sonner";
-import { Loader2, Eye, EyeOff, Phone, Lock, User, Sparkles } from "lucide-react";
+import { Loader2, Eye, EyeOff, Phone, Lock, User, Sparkles, ShieldCheck } from "lucide-react";
+import { cleanPhoneDigits, legacyPhoneEmail, phoneForSupabase } from "@/lib/phone";
 
 export const Route = createFileRoute("/auth")({
   validateSearch: (s: Record<string, unknown>): { next?: string } => ({
@@ -20,8 +21,18 @@ export const Route = createFileRoute("/auth")({
   component: AuthPage,
 });
 
-function phoneToEmail(phone: string) {
-  return `${phone.replace(/\D/g, "")}@miprojet.app`;
+function signupErrorMessage(error: unknown) {
+  if (error instanceof TypeError) {
+    return "Connexion au serveur impossible. Vérifie Internet puis réessaie.";
+  }
+  if (error instanceof Error && error.message) return error.message;
+  return "Création impossible. Réessaie dans un instant.";
+}
+
+async function signInWithPhone(phone: string, password: string) {
+  const nativeResult = await supabase.auth.signInWithPassword({ phone: phoneForSupabase(phone), password });
+  if (!nativeResult.error) return nativeResult;
+  return supabase.auth.signInWithPassword({ email: legacyPhoneEmail(phone), password });
 }
 
 function AuthPage() {
@@ -47,7 +58,7 @@ function AuthPage() {
   }, []);
 
   function validate() {
-    const cleaned = phone.replace(/\D/g, "");
+    const cleaned = cleanPhoneDigits(phone);
     const errs: typeof errors = {};
     if (cleaned.length < 8) errs.phone = "Numéro trop court (8 chiffres min).";
     else if (cleaned.length > 15) errs.phone = "Numéro trop long.";
@@ -62,9 +73,8 @@ function AuthPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!validate()) return;
-    const cleaned = phone.replace(/\D/g, "");
+    const cleaned = cleanPhoneDigits(phone);
     setLoading(true);
-    const email = phoneToEmail(cleaned);
     if (mode === "signup") {
       try {
         const response = await fetch("/api/public/register", {
@@ -73,11 +83,11 @@ function AuthPage() {
           body: JSON.stringify({ fullName: fullName.trim(), phone: cleaned, password }),
         });
         const result = (await response.json().catch(() => null)) as
-          | { error?: string; code?: string }
+          | { error?: string; code?: string; roleLabel?: string }
           | null;
         if (!response.ok) {
           if (result?.code === "account_exists") {
-            const { error: existingError } = await supabase.auth.signInWithPassword({ email, password });
+            const { error: existingError } = await signInWithPhone(cleaned, password);
             if (!existingError) {
               setLoading(false);
               toast.success("Tu as déjà un compte — te voilà connecté !");
@@ -89,21 +99,21 @@ function AuthPage() {
         }
       } catch (err) {
         setLoading(false);
-        toast.error((err as Error).message || "Création impossible");
+        toast.error(signupErrorMessage(err));
         return;
       }
-      const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+      const { error: signInError } = await signInWithPhone(cleaned, password);
       setLoading(false);
       if (signInError) {
         toast.error("Compte créé, mais connexion impossible. Réessaie de te connecter.");
         setMode("login");
         return;
       }
-      toast.success("Compte créé. Bienvenue sur MiPROJET Go !");
+      toast.success("Compte créé — rôle Responsable attribué et envoyé à l’écosystème.");
       goNext();
       return;
     }
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { error } = await signInWithPhone(cleaned, password);
     setLoading(false);
     if (error) {
       setErrors({ password: "Numéro ou mot de passe incorrect." });
@@ -195,6 +205,15 @@ function AuthPage() {
               </p>
             </div>
           </div>
+
+          {mode === "signup" && (
+            <div className="flex items-center gap-2 rounded-xl border border-primary/20 bg-primary/5 px-3 py-2.5">
+              <ShieldCheck className="h-4 w-4 shrink-0 text-primary" />
+              <p className="text-xs text-foreground">
+                Rôle attribué automatiquement : <strong>Responsable d’activité</strong>
+              </p>
+            </div>
+          )}
 
           {mode === "signup" && (
             <div className="space-y-1.5">
