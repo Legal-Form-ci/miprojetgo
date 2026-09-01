@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { LOGO_URL } from "@/lib/brand";
 import { toast } from "sonner";
 import { Loader2, Eye, EyeOff, Phone, Lock, User, Sparkles, ShieldCheck } from "lucide-react";
+import { cleanPhoneDigits, legacyPhoneEmail, phoneForSupabase } from "@/lib/phone";
 
 export const Route = createFileRoute("/auth")({
   validateSearch: (s: Record<string, unknown>): { next?: string } => ({
@@ -20,16 +21,18 @@ export const Route = createFileRoute("/auth")({
   component: AuthPage,
 });
 
-function phoneForAuth(phone: string) {
-  return `+${phone.replace(/\D/g, "")}`;
-}
-
 function signupErrorMessage(error: unknown) {
   if (error instanceof TypeError) {
     return "Connexion au serveur impossible. Vérifie Internet puis réessaie.";
   }
   if (error instanceof Error && error.message) return error.message;
   return "Création impossible. Réessaie dans un instant.";
+}
+
+async function signInWithPhone(phone: string, password: string) {
+  const nativeResult = await supabase.auth.signInWithPassword({ phone: phoneForSupabase(phone), password });
+  if (!nativeResult.error) return nativeResult;
+  return supabase.auth.signInWithPassword({ email: legacyPhoneEmail(phone), password });
 }
 
 function AuthPage() {
@@ -55,7 +58,7 @@ function AuthPage() {
   }, []);
 
   function validate() {
-    const cleaned = phone.replace(/\D/g, "");
+    const cleaned = cleanPhoneDigits(phone);
     const errs: typeof errors = {};
     if (cleaned.length < 8) errs.phone = "Numéro trop court (8 chiffres min).";
     else if (cleaned.length > 15) errs.phone = "Numéro trop long.";
@@ -70,9 +73,8 @@ function AuthPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!validate()) return;
-    const cleaned = phone.replace(/\D/g, "");
+    const cleaned = cleanPhoneDigits(phone);
     setLoading(true);
-    const authPhone = phoneForAuth(cleaned);
     if (mode === "signup") {
       try {
         const response = await fetch("/api/public/register", {
@@ -85,7 +87,7 @@ function AuthPage() {
           | null;
         if (!response.ok) {
           if (result?.code === "account_exists") {
-            const { error: existingError } = await supabase.auth.signInWithPassword({ phone: authPhone, password });
+            const { error: existingError } = await signInWithPhone(cleaned, password);
             if (!existingError) {
               setLoading(false);
               toast.success("Tu as déjà un compte — te voilà connecté !");
@@ -100,7 +102,7 @@ function AuthPage() {
         toast.error(signupErrorMessage(err));
         return;
       }
-      const { error: signInError } = await supabase.auth.signInWithPassword({ phone: authPhone, password });
+      const { error: signInError } = await signInWithPhone(cleaned, password);
       setLoading(false);
       if (signInError) {
         toast.error("Compte créé, mais connexion impossible. Réessaie de te connecter.");
@@ -111,7 +113,7 @@ function AuthPage() {
       goNext();
       return;
     }
-    const { error } = await supabase.auth.signInWithPassword({ phone: authPhone, password });
+    const { error } = await signInWithPhone(cleaned, password);
     setLoading(false);
     if (error) {
       setErrors({ password: "Numéro ou mot de passe incorrect." });

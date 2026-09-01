@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { phoneForSupabase } from "@/lib/phone";
 
 const createVendorSchema = z.object({
   fullName: z.string().trim().min(2, "Nom requis").max(80, "Nom trop long"),
@@ -26,7 +27,7 @@ export const createVendorAccount = createServerFn({ method: "POST" })
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: created, error: createError } = await supabaseAdmin.auth.admin.createUser({
-      phone: `+${data.phone}`,
+      phone: phoneForSupabase(data.phone),
       password: data.password,
       phone_confirm: true,
       user_metadata: { phone: data.phone, full_name: data.fullName },

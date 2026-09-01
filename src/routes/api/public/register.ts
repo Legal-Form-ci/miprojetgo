@@ -1,11 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
+import { cleanPhoneDigits, phoneForSupabase } from "@/lib/phone";
 
 const registerSchema = z.object({
   fullName: z.string().trim().min(2).max(80),
   phone: z
     .string()
-    .transform((value) => value.replace(/\D/g, ""))
+    .transform(cleanPhoneDigits)
     .pipe(z.string().min(8).max(15)),
   password: z.string().min(6).max(64),
 });
@@ -25,43 +26,55 @@ export const Route = createFileRoute("/api/public/register")({
         }
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-        const { data, error } = await supabaseAdmin.auth.admin.createUser({
-          phone: `+${input.phone}`,
-          password: input.password,
-          phone_confirm: true,
-          user_metadata: {
-            phone: input.phone,
-            full_name: input.fullName,
-            source_app: "miprojet-go",
-          },
-        });
+        try {
+          const { data: existingProfile } = await supabaseAdmin
+            .from("profiles")
+            .select("id")
+            .eq("phone", input.phone)
+            .limit(1)
+            .maybeSingle();
+          if (existingProfile) {
+            return Response.json(
+              { error: "Ce numéro possède déjà un compte. Connecte-toi.", code: "account_exists" },
+              { status: 409 },
+            );
+          }
 
-        if (error || !data.user) {
-          const message = (error?.message ?? "").toLowerCase();
-          const exists =
-            message.includes("already") ||
-            message.includes("exists") ||
-            message.includes("registered");
-          return Response.json(
-            {
-              error: exists
-                ? "Ce numéro possède déjà un compte. Connecte-toi."
-                : "Création impossible pour le moment. Réessaie dans un instant.",
-              code: exists ? "account_exists" : "registration_failed",
+          const { data, error } = await supabaseAdmin.auth.admin.createUser({
+            phone: phoneForSupabase(input.phone),
+            password: input.password,
+            phone_confirm: true,
+            user_metadata: {
+              phone: input.phone,
+              full_name: input.fullName,
+              source_app: "miprojet-go",
             },
-            { status: exists ? 409 : 503 },
+          });
+
+          if (error || !data.user) {
+            const message = (error?.message ?? "").toLowerCase();
+            const exists = message.includes("already") || message.includes("exists") || message.includes("registered");
+            return Response.json(
+              {
+                error: exists
+                  ? "Ce numéro possède déjà un compte. Connecte-toi."
+                  : "Création impossible pour le moment. Vérifie le numéro puis réessaie.",
+                code: exists ? "account_exists" : "registration_failed",
+              },
+              { status: exists ? 409 : 503 },
+            );
+          }
+
+          return Response.json(
+            { ok: true, role: "user", roleLabel: "Responsable d’activité", syncStatus: "queued" },
+            { status: 201 },
+          );
+        } catch {
+          return Response.json(
+            { error: "Service d’inscription momentanément indisponible. Réessaie dans un instant.", code: "service_unavailable" },
+            { status: 503 },
           );
         }
-
-        return Response.json(
-          {
-            ok: true,
-            role: "user",
-            roleLabel: "Responsable d’activité",
-            syncStatus: "queued",
-          },
-          { status: 201 },
-        );
       },
     },
   },
