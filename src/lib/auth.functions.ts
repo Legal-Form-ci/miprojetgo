@@ -19,13 +19,10 @@ export const signUpWithPhone = createServerFn({ method: "POST" })
   .inputValidator((input) => schema.parse(input))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const email = `${data.phone}@miprojet.app`;
-
     const { data: created, error } = await supabaseAdmin.auth.admin.createUser({
-      email,
+      phone: `+${data.phone}`,
       password: data.password,
-      email_confirm: true,
-      phone_confirm: false,
+      phone_confirm: true,
       user_metadata: { phone: data.phone, full_name: data.fullName },
     });
 

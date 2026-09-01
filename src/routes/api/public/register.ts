@@ -25,11 +25,10 @@ export const Route = createFileRoute("/api/public/register")({
         }
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-        const email = `${input.phone}@miprojet.app`;
         const { data, error } = await supabaseAdmin.auth.admin.createUser({
-          email,
+          phone: `+${input.phone}`,
           password: input.password,
-          email_confirm: true,
+          phone_confirm: true,
           user_metadata: {
             phone: input.phone,
             full_name: input.fullName,
@@ -54,7 +53,15 @@ export const Route = createFileRoute("/api/public/register")({
           );
         }
 
-        return Response.json({ ok: true }, { status: 201 });
+        return Response.json(
+          {
+            ok: true,
+            role: "user",
+            roleLabel: "Responsable d’activité",
+            syncStatus: "queued",
+          },
+          { status: 201 },
+        );
       },
     },
   },
