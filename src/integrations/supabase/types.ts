@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.1"
+    PostgrestVersion: "14.5"
   }
   public: {
     Tables: {
@@ -181,6 +181,38 @@ export type Database = {
           module?: string
         }
         Relationships: []
+      }
+      connection_messages: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          request_id: string
+          sender_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          request_id: string
+          sender_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          request_id?: string
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "connection_messages_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "connection_requests"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       connection_requests: {
         Row: {
@@ -4596,6 +4628,10 @@ export type Database = {
         Args: { _prefix: string; _rank: number; _ts: string }
         Returns: string
       }
+      can_access_connection_channel: {
+        Args: { _request_id: string; _user_id: string }
+        Returns: boolean
+      }
       can_manage_org: { Args: { _org_id: string }; Returns: boolean }
       current_org_role: {
         Args: { _org_id: string }
@@ -4671,6 +4707,21 @@ export type Database = {
         Returns: number
       }
       increment_tender_views: { Args: { _id: string }; Returns: undefined }
+      invest_can_read_document_object: {
+        Args: { _path: string }
+        Returns: boolean
+      }
+      invest_project_documents: {
+        Args: { _project_id: string }
+        Returns: {
+          created_at: string
+          id: string
+          name: string
+          size_bytes: number
+          storage_path: string
+          unlocked: boolean
+        }[]
+      }
       is_any_admin: { Args: { _user_id: string }; Returns: boolean }
       is_email_unsubscribed: { Args: { _email: string }; Returns: boolean }
       is_org_member: { Args: { _org_id: string }; Returns: boolean }
@@ -4682,6 +4733,33 @@ export type Database = {
       mark_email_sent: {
         Args: { _id: string; _provider: string }
         Returns: undefined
+      }
+      mp_can_read_document: {
+        Args: {
+          _min_role: Database["public"]["Enums"]["org_role"]
+          _org_id: string
+          _owner_id: string
+        }
+        Returns: boolean
+      }
+      mp_public_projects: {
+        Args: never
+        Returns: {
+          activity_type: string
+          city: string
+          country: string
+          cover_url: string
+          created_at: string
+          description: string
+          display_id: string
+          id: string
+          logo_url: string
+          project_type: string
+          sector: string
+          short_pitch: string
+          status: string
+          title: string
+        }[]
       }
       mp_recompute_score: { Args: { _project_id: string }; Returns: undefined }
       mp_resync_scoring: { Args: { _project_id?: string }; Returns: Json }
@@ -4700,6 +4778,7 @@ export type Database = {
         Args: { _min: Database["public"]["Enums"]["org_role"]; _org: string }
         Returns: boolean
       }
+      owns_any_project: { Args: { _user_id: string }; Returns: boolean }
       pick_email_provider: { Args: never; Returns: string }
       role_rank: {
         Args: { _r: Database["public"]["Enums"]["org_role"] }
