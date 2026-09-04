@@ -3,8 +3,9 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState, type FormEvent, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { createVendorAccount, listUsersOverview, syncUserNow } from "@/lib/admin.functions";
-import { Users, Shield, User as UserIcon, Loader2, PlusCircle, RefreshCcw, CheckCircle2 } from "lucide-react";
+import { createVendorAccount, listUsersOverview } from "@/lib/admin.functions";
+import { Users, Shield, User as UserIcon, Loader2, PlusCircle, CheckCircle2 } from "lucide-react";
+
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/utilisateurs")({
