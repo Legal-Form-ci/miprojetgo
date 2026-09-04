@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
-import { cleanPhoneDigits, phoneForSupabase } from "@/lib/phone";
+import { cleanPhoneDigits, legacyPhoneEmail, phoneForSupabase } from "@/lib/phone";
 
 const registerSchema = z.object({
   fullName: z.string().trim().min(2).max(80),
@@ -42,14 +42,19 @@ export const Route = createFileRoute("/api/public/register")({
 
           const { data, error } = await supabaseAdmin.auth.admin.createUser({
             phone: phoneForSupabase(input.phone),
+            // E-mail interne de secours : permet la connexion même si le
+            // fournisseur téléphone est indisponible côté Supabase.
+            email: legacyPhoneEmail(input.phone),
             password: input.password,
             phone_confirm: true,
+            email_confirm: true,
             user_metadata: {
               phone: input.phone,
               full_name: input.fullName,
               source_app: "miprojet-go",
             },
           });
+
 
           if (error || !data.user) {
             const message = (error?.message ?? "").toLowerCase();
