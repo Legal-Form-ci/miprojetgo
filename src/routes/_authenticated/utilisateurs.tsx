@@ -3,8 +3,9 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState, type FormEvent, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { createVendorAccount, listUsersOverview, syncUserNow } from "@/lib/admin.functions";
-import { Users, Shield, User as UserIcon, Loader2, PlusCircle, RefreshCcw, CheckCircle2 } from "lucide-react";
+import { createVendorAccount, listUsersOverview } from "@/lib/admin.functions";
+import { Users, Shield, User as UserIcon, Loader2, PlusCircle, CheckCircle2 } from "lucide-react";
+
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/utilisateurs")({
@@ -29,7 +30,7 @@ function UtilisateursPage() {
   const qc = useQueryClient();
   const createVendor = useServerFn(createVendorAccount);
   const listUsers = useServerFn(listUsersOverview);
-  const syncUser = useServerFn(syncUserNow);
+  
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
@@ -49,14 +50,8 @@ function UtilisateursPage() {
     },
     onError: (error: Error) => toast.error(error.message || "Création impossible"),
   });
-  const syncMutation = useMutation({
-    mutationFn: (userId: string) => syncUser({ data: { userId } }),
-    onSuccess: () => {
-      toast.success("Utilisateur envoyé à l’écosystème et journalisé.");
-      qc.invalidateQueries({ queryKey: ["users-overview"] });
-    },
-    onError: (error: Error) => toast.error(error.message || "Synchronisation impossible"),
-  });
+
+
 
   function submit(e: FormEvent) {
     e.preventDefault();
@@ -145,17 +140,10 @@ function UtilisateursPage() {
                   <span className={`text-[10px] font-bold uppercase tracking-wide px-2 py-1 rounded-full ${isAdmin ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
                     {isAdmin ? "Admin" : u.roles.includes("vendeur") ? "Vendeur" : "Responsable"}
                   </span>
-                  <button
-                    type="button"
-                    onClick={() => syncMutation.mutate(u.id)}
-                    disabled={syncMutation.isPending && syncMutation.variables === u.id}
-                    className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-border px-2 text-[11px] font-semibold text-primary hover:bg-primary/5 disabled:opacity-60"
-                  >
-                    {syncMutation.isPending && syncMutation.variables === u.id
-                      ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      : <RefreshCcw className="h-3.5 w-3.5" />}
-                    Synchroniser maintenant
-                  </button>
+                  <span className="inline-flex items-center gap-1 text-[10px] font-medium text-muted-foreground">
+                    <CheckCircle2 className="h-3 w-3 text-primary" />
+                    Synchronisé
+                  </span>
                 </div>
               </li>
             );
@@ -165,8 +153,9 @@ function UtilisateursPage() {
 
       <div className="flex items-center gap-2 rounded-xl border border-primary/20 bg-primary/5 p-3 text-xs text-foreground">
         <CheckCircle2 className="h-4 w-4 shrink-0 text-primary" />
-        Les nouveaux comptes apparaissent ici dès leur création. La relance crée un nouveau signal audité pour l’écosystème.
+        Chaque membre d’équipe est envoyé automatiquement à l’écosystème en arrière-plan, dès sa création ou son changement de rôle. Aucune action manuelle nécessaire.
       </div>
+
 
     </div>
   );
