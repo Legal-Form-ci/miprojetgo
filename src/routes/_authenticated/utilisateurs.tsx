@@ -30,7 +30,7 @@ function UtilisateursPage() {
   const qc = useQueryClient();
   const createVendor = useServerFn(createVendorAccount);
   const listUsers = useServerFn(listUsersOverview);
-  const syncUser = useServerFn(syncUserNow);
+  
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
