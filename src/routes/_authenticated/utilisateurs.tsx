@@ -49,14 +49,8 @@ function UtilisateursPage() {
     },
     onError: (error: Error) => toast.error(error.message || "Création impossible"),
   });
-  const syncMutation = useMutation({
-    mutationFn: (userId: string) => syncUser({ data: { userId } }),
-    onSuccess: () => {
-      toast.success("Utilisateur envoyé à l’écosystème et journalisé.");
-      qc.invalidateQueries({ queryKey: ["users-overview"] });
-    },
-    onError: (error: Error) => toast.error(error.message || "Synchronisation impossible"),
-  });
+
+
 
   function submit(e: FormEvent) {
     e.preventDefault();
