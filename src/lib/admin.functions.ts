@@ -111,11 +111,17 @@ export const syncUserNow = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { resolveGoTeamScope } = await import("@/lib/tenant-scope.server");
+    const { userIds } = await resolveGoTeamScope(supabaseAdmin, context.userId);
+    if (!userIds.includes(data.userId)) {
+      throw new Error("Cet utilisateur n’appartient pas à votre activité.");
+    }
     const [{ data: profile, error: profileError }, { data: roles, error: rolesError }] = await Promise.all([
       supabaseAdmin.from("profiles").select("id, full_name, phone, created_at").eq("id", data.userId).maybeSingle(),
       supabaseAdmin.from("user_roles").select("role").eq("user_id", data.userId),
     ]);
     if (profileError || rolesError || !profile) throw new Error("Utilisateur introuvable.");
+
 
     const payload = {
       app: "miprojet-go",
