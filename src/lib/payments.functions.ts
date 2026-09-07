@@ -311,6 +311,12 @@ export const setExportAccess = createServerFn({ method: "POST" })
     await assertAdmin(context);
     const { grantExportDays } = await import("@/lib/wave.server");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { resolveGoTeamScope } = await import("@/lib/tenant-scope.server");
+    const { userIds } = await resolveGoTeamScope(supabaseAdmin, context.userId);
+    if (!userIds.includes(data.userId)) {
+      throw new Error("Cet utilisateur n’appartient pas à votre activité.");
+    }
+
 
     if (data.days === 0) {
       const { error } = await supabaseAdmin
