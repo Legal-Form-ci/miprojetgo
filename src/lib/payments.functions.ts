@@ -171,24 +171,28 @@ export const getPaymentsAdminOverview = createServerFn({ method: "GET" })
     await assertAdmin(context);
     const { loadWaveConfig } = await import("@/lib/wave.server");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { resolveGoTeamScope } = await import("@/lib/tenant-scope.server");
 
     const config = await loadWaveConfig();
+    const { userIds } = await resolveGoTeamScope(supabaseAdmin, context.userId);
 
     const { data: payments } = await supabaseAdmin
       .from("payments")
       .select("id, user_id, amount, currency, status, payment_method, payment_reference, metadata, created_at")
       .eq("payment_method", "wave")
+      .in("user_id", userIds)
       .order("created_at", { ascending: false })
       .limit(100);
 
     const rows = payments ?? [];
-    const userIds = [...new Set(rows.map((r) => r.user_id).filter(Boolean))] as string[];
-    const { data: profiles } = userIds.length
+    const scopedIds = [...new Set(rows.map((r) => r.user_id).filter(Boolean))] as string[];
+    const { data: profiles } = scopedIds.length
       ? await supabaseAdmin
           .from("profiles")
           .select("id, full_name, phone, export_unlocked_until")
-          .in("id", userIds)
+          .in("id", scopedIds)
       : { data: [] as Array<{ id: string; full_name: string | null; phone: string | null; export_unlocked_until: string | null }> };
+
 
     const byId = new Map((profiles ?? []).map((p) => [p.id, p]));
 
@@ -307,6 +311,12 @@ export const setExportAccess = createServerFn({ method: "POST" })
     await assertAdmin(context);
     const { grantExportDays } = await import("@/lib/wave.server");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { resolveGoTeamScope } = await import("@/lib/tenant-scope.server");
+    const { userIds } = await resolveGoTeamScope(supabaseAdmin, context.userId);
+    if (!userIds.includes(data.userId)) {
+      throw new Error("Cet utilisateur n’appartient pas à votre activité.");
+    }
+
 
     if (data.days === 0) {
       const { error } = await supabaseAdmin
@@ -335,12 +345,17 @@ export const setPaymentStatus = createServerFn({ method: "POST" })
     const { grantExportDays } = await import("@/lib/wave.server");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
+    const { resolveGoTeamScope } = await import("@/lib/tenant-scope.server");
+    const { userIds } = await resolveGoTeamScope(supabaseAdmin, context.userId);
+
     const { data: payment } = await supabaseAdmin
       .from("payments")
       .select("id, user_id, status, metadata")
       .eq("id", data.paymentId)
+      .in("user_id", userIds)
       .maybeSingle();
     if (!payment) throw new Error("Paiement introuvable.");
+
 
     const meta = (payment.metadata ?? {}) as Record<string, unknown>;
     let unlockedUntil: string | null = null;

@@ -55,6 +55,13 @@ export const createVendorAccount = createServerFn({ method: "POST" })
       throw new Error("Compte créé, mais rôle vendeur non attribué.");
     }
 
+    // Rattache le vendeur à l'espace d'activité de l'admin (isolation multi-tenant).
+    const { resolveGoTeamScope } = await import("@/lib/tenant-scope.server");
+    const { ownerId } = await resolveGoTeamScope(supabaseAdmin, context.userId);
+    await supabaseAdmin
+      .from("go_team_members")
+      .upsert({ owner_id: ownerId, member_id: userId, team_role: "vendeur", active: true } as never);
+
     return { id: userId, fullName: data.fullName, phone: data.phone, role: "vendeur" as const };
   });
 
@@ -63,7 +70,7 @@ async function assertAdmin(context: { supabase: any; userId: string }) {
     .from("user_roles")
     .select("role")
     .eq("user_id", context.userId)
-    .in("role", ["admin", "super_admin"])
+    .in("role", ["admin", "go_admin", "super_admin"])
     .limit(1)
     .maybeSingle();
   if (error || !data) throw new Error("Action réservée aux administrateurs.");
@@ -74,11 +81,18 @@ export const listUsersOverview = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     await assertAdmin(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { resolveGoTeamScope } = await import("@/lib/tenant-scope.server");
+    const { userIds } = await resolveGoTeamScope(supabaseAdmin, context.userId);
+
     const [{ data: profiles, error: profilesError }, { data: roles, error: rolesError }] = await Promise.all([
-      supabaseAdmin.from("profiles").select("id, full_name, phone, created_at").order("created_at", { ascending: false }),
-      supabaseAdmin.from("user_roles").select("user_id, role"),
+      supabaseAdmin
+        .from("profiles")
+        .select("id, full_name, phone, created_at")
+        .in("id", userIds)
+        .order("created_at", { ascending: false }),
+      supabaseAdmin.from("user_roles").select("user_id, role").in("user_id", userIds),
     ]);
-    if (profilesError || rolesError) throw new Error("Impossible de charger les utilisateurs de l’écosystème.");
+    if (profilesError || rolesError) throw new Error("Impossible de charger les utilisateurs de votre activité.");
     const rolesByUser = new Map<string, string[]>();
     for (const item of roles ?? []) {
       rolesByUser.set(item.user_id, [...(rolesByUser.get(item.user_id) ?? []), item.role]);
@@ -90,17 +104,24 @@ export const listUsersOverview = createServerFn({ method: "GET" })
     }));
   });
 
+
 export const syncUserNow = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => z.object({ userId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { resolveGoTeamScope } = await import("@/lib/tenant-scope.server");
+    const { userIds } = await resolveGoTeamScope(supabaseAdmin, context.userId);
+    if (!userIds.includes(data.userId)) {
+      throw new Error("Cet utilisateur n’appartient pas à votre activité.");
+    }
     const [{ data: profile, error: profileError }, { data: roles, error: rolesError }] = await Promise.all([
       supabaseAdmin.from("profiles").select("id, full_name, phone, created_at").eq("id", data.userId).maybeSingle(),
       supabaseAdmin.from("user_roles").select("role").eq("user_id", data.userId),
     ]);
     if (profileError || rolesError || !profile) throw new Error("Utilisateur introuvable.");
+
 
     const payload = {
       app: "miprojet-go",
