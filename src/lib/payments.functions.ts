@@ -345,12 +345,17 @@ export const setPaymentStatus = createServerFn({ method: "POST" })
     const { grantExportDays } = await import("@/lib/wave.server");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
+    const { resolveGoTeamScope } = await import("@/lib/tenant-scope.server");
+    const { userIds } = await resolveGoTeamScope(supabaseAdmin, context.userId);
+
     const { data: payment } = await supabaseAdmin
       .from("payments")
       .select("id, user_id, status, metadata")
       .eq("id", data.paymentId)
+      .in("user_id", userIds)
       .maybeSingle();
     if (!payment) throw new Error("Paiement introuvable.");
+
 
     const meta = (payment.metadata ?? {}) as Record<string, unknown>;
     let unlockedUntil: string | null = null;
