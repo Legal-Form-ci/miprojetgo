@@ -4,7 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { LOGO_URL } from "@/lib/brand";
 import { toast } from "sonner";
 import { Loader2, Eye, EyeOff, Phone, Lock, User, Sparkles, ShieldCheck } from "lucide-react";
-import { cleanPhoneDigits, legacyPhoneEmail, phoneForSupabase } from "@/lib/phone";
+import { cleanPhoneDigits, legacyPhoneEmail, phoneForSupabase, phoneE164Digits } from "@/lib/phone";
+import { PhoneInput } from "@/components/phone-input";
 
 export const Route = createFileRoute("/auth")({
   validateSearch: (s: Record<string, unknown>): { next?: string } => ({
@@ -45,6 +46,7 @@ function AuthPage() {
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
+  const [dial, setDial] = useState("225");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPwd, setShowPwd] = useState(false);
@@ -73,7 +75,7 @@ function AuthPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!validate()) return;
-    const cleaned = cleanPhoneDigits(phone);
+    const cleaned = phoneE164Digits(phone, dial);
     setLoading(true);
     if (mode === "signup") {
       try {
@@ -243,22 +245,15 @@ function AuthPage() {
             <label className="text-xs font-semibold text-foreground/80 uppercase tracking-wide">
               Numéro de téléphone
             </label>
-            <div className="relative">
-              <Phone className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                  <input
-                    id="auth-phone"
-                    aria-label="Numéro de téléphone"
-                type="tel"
-                inputMode="numeric"
-                autoComplete="tel"
-                placeholder="07 10 26 28 75"
-                value={phone}
-                maxLength={20}
-                onChange={(e) => { setPhone(e.target.value); if (errors.phone) setErrors({ ...errors, phone: undefined }); }}
-                className={`w-full h-12 pl-10 pr-4 rounded-xl bg-input/40 border focus:outline-none focus:ring-2 focus:ring-ring text-foreground text-base tabular-nums ${errors.phone ? "border-red-500" : "border-border"}`}
-                required
-              />
-            </div>
+            <PhoneInput
+              id="auth-phone"
+              dial={dial}
+              onDialChange={setDial}
+              value={phone}
+              onChange={(v) => { setPhone(v); if (errors.phone) setErrors({ ...errors, phone: undefined }); }}
+              error={!!errors.phone}
+              required
+            />
             {errors.phone && <p className="text-[11px] text-red-600 font-medium">{errors.phone}</p>}
           </div>
 

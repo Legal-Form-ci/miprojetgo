@@ -1,3 +1,5 @@
+import { PhoneInput } from "@/components/phone-input";
+import { phoneE164Digits } from "@/lib/phone";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -33,6 +35,7 @@ function UtilisateursPage() {
   
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
+  const [dial, setDial] = useState("225");
   const [password, setPassword] = useState("");
   const { data, isLoading } = useQuery({
     queryKey: ["users-overview"],
@@ -40,7 +43,7 @@ function UtilisateursPage() {
   });
 
   const createMutation = useMutation({
-    mutationFn: () => createVendor({ data: { fullName, phone, password } }),
+    mutationFn: () => createVendor({ data: { fullName, phone: phoneE164Digits(phone, dial), password } }),
     onSuccess: (vendor) => {
       toast.success(`Vendeur créé : ${vendor.phone}`);
       setFullName("");
@@ -86,14 +89,7 @@ function UtilisateursPage() {
             />
           </Field>
           <Field label="Téléphone">
-            <input
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              placeholder="07 00 00 00 00"
-              inputMode="numeric"
-              maxLength={20}
-              className="w-full h-11 px-3 rounded-xl bg-background border border-border focus:outline-none focus:ring-2 focus:ring-ring text-sm tabular-nums"
-            />
+            <PhoneInput dial={dial} onDialChange={setDial} value={phone} onChange={setPhone} />
           </Field>
           <Field label="Mot de passe temporaire">
             <input
