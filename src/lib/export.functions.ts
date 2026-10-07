@@ -54,7 +54,7 @@ export const exportHistoryCsv = createServerFn({ method: "POST" })
       .from("user_roles")
       .select("role")
       .eq("user_id", context.userId)
-      .eq("role", "admin")
+      .in("role", ["admin", "go_admin", "super_admin"])
       .maybeSingle();
 
     if (roleError || !adminRole) {
@@ -141,7 +141,7 @@ export const exportHistoryReport = createServerFn({ method: "POST" })
   .inputValidator((input) => exportSchema.parse(input))
   .handler(async ({ data, context }) => {
     const { data: adminRole } = await context.supabase
-      .from("user_roles").select("role").eq("user_id", context.userId).eq("role", "admin").maybeSingle();
+      .from("user_roles").select("role").eq("user_id", context.userId).in("role", ["admin", "go_admin", "super_admin"]).maybeSingle();
     if (!adminRole) throw new Error("Rapport reserve a l'admin.");
     await assertExportEntitlement(context);
 
@@ -331,7 +331,7 @@ export const exportHistoryExcelRows = createServerFn({ method: "POST" })
   .inputValidator((input) => exportSchema.parse(input))
   .handler(async ({ data, context }) => {
     const { data: adminRole } = await context.supabase
-      .from("user_roles").select("role").eq("user_id", context.userId).eq("role", "admin").maybeSingle();
+      .from("user_roles").select("role").eq("user_id", context.userId).in("role", ["admin", "go_admin", "super_admin"]).maybeSingle();
     if (!adminRole) throw new Error("Export reserve a l'admin.");
     await assertExportEntitlement(context);
 

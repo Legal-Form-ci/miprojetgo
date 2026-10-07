@@ -127,7 +127,7 @@ function History() {
   useEffect(() => {
     supabase.auth.getUser().then(({ data: u }) => {
       if (!u.user) return;
-      supabase.from("user_roles").select("role").eq("user_id", u.user.id).eq("role", "admin").maybeSingle()
+      supabase.from("user_roles").select("role").eq("user_id", u.user.id).in("role", ["admin", "go_admin", "super_admin"]).maybeSingle()
         .then(({ data }) => setIsAdmin(!!data));
     });
   }, []);

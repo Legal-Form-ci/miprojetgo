@@ -33,7 +33,7 @@ function Dashboard() {
       const uid = u.user?.id;
       if (!uid) return { uid: null, isAdmin: false, profile: null };
       const [{ data: roleRow }, { data: prof }] = await Promise.all([
-        supabase.from("user_roles").select("role").eq("user_id", uid).eq("role", "admin").maybeSingle(),
+        supabase.from("user_roles").select("role").eq("user_id", uid).in("role", ["admin", "go_admin", "super_admin"]).maybeSingle(),
         supabase
           .from("profiles")
           .select("full_name, first_name, last_name, phone, avatar_url")

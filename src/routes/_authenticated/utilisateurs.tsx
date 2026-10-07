@@ -17,7 +17,7 @@ export const Route = createFileRoute("/_authenticated/utilisateurs")({
       .from("user_roles")
       .select("role")
       .eq("user_id", u.user.id)
-      .eq("role", "admin")
+      .in("role", ["admin", "go_admin", "super_admin"])
       .maybeSingle();
     if (!data) throw redirect({ to: "/dashboard" });
   },
@@ -122,7 +122,7 @@ function UtilisateursPage() {
       ) : (
         <ul className="space-y-2">
           {(data ?? []).map((u) => {
-            const isAdmin = u.roles.includes("admin");
+            const isAdmin = u.roles.some((r) => ["admin","go_admin","super_admin"].includes(r));
             return (
               <li
                 key={u.id}
