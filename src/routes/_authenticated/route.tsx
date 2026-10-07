@@ -55,7 +55,7 @@ function AuthedLayout() {
   }
 
   const tabs: Array<{
-    to: "/dashboard" | "/operations" | "/historique" | "/import" | "/synchronisation" | "/utilisateurs" | "/voix" | "/profil" | "/produits" | "/parametres" | "/paiements";
+    to: "/dashboard" | "/operations" | "/historique" | "/import" | "/utilisateurs" | "/voix" | "/profil" | "/produits" | "/parametres" | "/paiements";
     label: string;
     icon: typeof LayoutDashboard;
     primary?: boolean;
