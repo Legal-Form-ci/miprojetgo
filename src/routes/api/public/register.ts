@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
-import { cleanPhoneDigits, legacyPhoneEmail, phoneForSupabase } from "@/lib/phone";
+import { cleanPhoneDigits, legacyPhoneEmail, phoneForSupabase, phoneStoredVariants } from "@/lib/phone";
 
 const registerSchema = z.object({
   fullName: z.string().trim().min(2).max(80),
@@ -25,12 +25,19 @@ export const Route = createFileRoute("/api/public/register")({
           );
         }
 
+        if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+          console.error("[register] SUPABASE_URL ou SUPABASE_SERVICE_ROLE_KEY manquant sur l’hébergement");
+          return Response.json(
+            { error: "Inscription indisponible : l’hébergement n’a pas encore ses clés de configuration. Contacte l’administrateur MiPROJET.", code: "server_misconfigured" },
+            { status: 503 },
+          );
+        }
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         try {
           const { data: existingProfile } = await supabaseAdmin
             .from("profiles")
             .select("id")
-            .eq("phone", input.phone)
+            .in("phone", phoneStoredVariants(input.phone))
             .limit(1)
             .maybeSingle();
           if (existingProfile) {

@@ -18,7 +18,7 @@ export const createVendorAccount = createServerFn({ method: "POST" })
       .from("user_roles")
       .select("role")
       .eq("user_id", context.userId)
-      .eq("role", "admin")
+      .in("role", ["admin", "go_admin", "super_admin"])
       .maybeSingle();
 
     if (roleError || !adminRole) {

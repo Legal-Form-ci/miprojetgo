@@ -37,7 +37,7 @@ function AuthedLayout() {
       .from("user_roles")
       .select("role")
       .eq("user_id", user.id)
-      .eq("role", "admin")
+      .in("role", ["admin", "go_admin", "super_admin"])
       .maybeSingle()
       .then(({ data }) => setIsAdmin(!!data));
   }, [user.id]);

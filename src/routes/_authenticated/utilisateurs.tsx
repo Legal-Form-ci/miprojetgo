@@ -1,3 +1,5 @@
+import { PhoneInput } from "@/components/phone-input";
+import { phoneE164Digits } from "@/lib/phone";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -17,7 +19,7 @@ export const Route = createFileRoute("/_authenticated/utilisateurs")({
       .from("user_roles")
       .select("role")
       .eq("user_id", u.user.id)
-      .eq("role", "admin")
+      .in("role", ["admin", "go_admin", "super_admin"])
       .maybeSingle();
     if (!data) throw redirect({ to: "/dashboard" });
   },
@@ -33,6 +35,7 @@ function UtilisateursPage() {
   
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
+  const [dial, setDial] = useState("225");
   const [password, setPassword] = useState("");
   const { data, isLoading } = useQuery({
     queryKey: ["users-overview"],
@@ -40,7 +43,7 @@ function UtilisateursPage() {
   });
 
   const createMutation = useMutation({
-    mutationFn: () => createVendor({ data: { fullName, phone, password } }),
+    mutationFn: () => createVendor({ data: { fullName, phone: phoneE164Digits(phone, dial), password } }),
     onSuccess: (vendor) => {
       toast.success(`Vendeur créé : ${vendor.phone}`);
       setFullName("");
@@ -86,14 +89,7 @@ function UtilisateursPage() {
             />
           </Field>
           <Field label="Téléphone">
-            <input
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              placeholder="07 00 00 00 00"
-              inputMode="numeric"
-              maxLength={20}
-              className="w-full h-11 px-3 rounded-xl bg-background border border-border focus:outline-none focus:ring-2 focus:ring-ring text-sm tabular-nums"
-            />
+            <PhoneInput dial={dial} onDialChange={setDial} value={phone} onChange={setPhone} />
           </Field>
           <Field label="Mot de passe temporaire">
             <input
@@ -122,7 +118,7 @@ function UtilisateursPage() {
       ) : (
         <ul className="space-y-2">
           {(data ?? []).map((u) => {
-            const isAdmin = u.roles.includes("admin");
+            const isAdmin = u.roles.some((r) => ["admin","go_admin","super_admin"].includes(r));
             return (
               <li
                 key={u.id}

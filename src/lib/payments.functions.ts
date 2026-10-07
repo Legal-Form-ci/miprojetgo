@@ -11,7 +11,7 @@ async function assertAdmin(context: { supabase: any; userId: string }) {
     .from("user_roles")
     .select("role")
     .eq("user_id", context.userId)
-    .eq("role", "admin")
+    .in("role", ["admin", "go_admin", "super_admin"])
     .maybeSingle();
   if (error || !data) throw new Error("Accès réservé à l'administrateur.");
 }

@@ -54,7 +54,7 @@ function ProfilPage() {
       .from("user_roles")
       .select("role")
       .eq("user_id", userId)
-      .eq("role", "admin")
+      .in("role", ["admin", "go_admin", "super_admin"])
       .maybeSingle()
       .then(({ data }) => setIsAdmin(!!data));
   }, [userId]);
