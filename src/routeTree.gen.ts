@@ -23,7 +23,6 @@ import { Route as AuthenticatedPaiementsRouteImport } from './routes/_authentica
 import { Route as AuthenticatedParametresRouteImport } from './routes/_authenticated/parametres'
 import { Route as AuthenticatedProduitsRouteImport } from './routes/_authenticated/produits'
 import { Route as AuthenticatedProfilRouteImport } from './routes/_authenticated/profil'
-import { Route as AuthenticatedSynchronisationRouteImport } from './routes/_authenticated/synchronisation'
 import { Route as AuthenticatedUtilisateursRouteImport } from './routes/_authenticated/utilisateurs'
 import { Route as AuthenticatedVoixRouteImport } from './routes/_authenticated/voix'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
@@ -104,12 +103,6 @@ const AuthenticatedProfilRoute = AuthenticatedProfilRouteImport.update({
   path: '/profil',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedSynchronisationRoute =
-  AuthenticatedSynchronisationRouteImport.update({
-    id: '/synchronisation',
-    path: '/synchronisation',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
 const AuthenticatedUtilisateursRoute =
   AuthenticatedUtilisateursRouteImport.update({
     id: '/utilisateurs',
@@ -169,7 +162,6 @@ export interface FileRoutesByFullPath {
   '/parametres': typeof AuthenticatedParametresRoute
   '/produits': typeof AuthenticatedProduitsRoute
   '/profil': typeof AuthenticatedProfilRoute
-  '/synchronisation': typeof AuthenticatedSynchronisationRoute
   '/utilisateurs': typeof AuthenticatedUtilisateursRoute
   '/voix': typeof AuthenticatedVoixRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
@@ -193,7 +185,6 @@ export interface FileRoutesByTo {
   '/parametres': typeof AuthenticatedParametresRoute
   '/produits': typeof AuthenticatedProduitsRoute
   '/profil': typeof AuthenticatedProfilRoute
-  '/synchronisation': typeof AuthenticatedSynchronisationRoute
   '/utilisateurs': typeof AuthenticatedUtilisateursRoute
   '/voix': typeof AuthenticatedVoixRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
@@ -219,7 +210,6 @@ export interface FileRoutesById {
   '/_authenticated/parametres': typeof AuthenticatedParametresRoute
   '/_authenticated/produits': typeof AuthenticatedProduitsRoute
   '/_authenticated/profil': typeof AuthenticatedProfilRoute
-  '/_authenticated/synchronisation': typeof AuthenticatedSynchronisationRoute
   '/_authenticated/utilisateurs': typeof AuthenticatedUtilisateursRoute
   '/_authenticated/voix': typeof AuthenticatedVoixRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
@@ -245,7 +235,6 @@ export interface FileRouteTypes {
     | '/parametres'
     | '/produits'
     | '/profil'
-    | '/synchronisation'
     | '/utilisateurs'
     | '/voix'
     | '/.lovable/oauth/consent'
@@ -269,7 +258,6 @@ export interface FileRouteTypes {
     | '/parametres'
     | '/produits'
     | '/profil'
-    | '/synchronisation'
     | '/utilisateurs'
     | '/voix'
     | '/.lovable/oauth/consent'
@@ -294,7 +282,6 @@ export interface FileRouteTypes {
     | '/_authenticated/parametres'
     | '/_authenticated/produits'
     | '/_authenticated/profil'
-    | '/_authenticated/synchronisation'
     | '/_authenticated/utilisateurs'
     | '/_authenticated/voix'
     | '/.lovable/oauth/consent'
@@ -419,13 +406,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedProfilRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/synchronisation': {
-      id: '/_authenticated/synchronisation'
-      path: '/synchronisation'
-      fullPath: '/synchronisation'
-      preLoaderRoute: typeof AuthenticatedSynchronisationRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
     '/_authenticated/utilisateurs': {
       id: '/_authenticated/utilisateurs'
       path: '/utilisateurs'
@@ -493,7 +473,6 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedParametresRoute: typeof AuthenticatedParametresRoute
   AuthenticatedProduitsRoute: typeof AuthenticatedProduitsRoute
   AuthenticatedProfilRoute: typeof AuthenticatedProfilRoute
-  AuthenticatedSynchronisationRoute: typeof AuthenticatedSynchronisationRoute
   AuthenticatedUtilisateursRoute: typeof AuthenticatedUtilisateursRoute
   AuthenticatedVoixRoute: typeof AuthenticatedVoixRoute
   AuthenticatedOperationsNewRoute: typeof AuthenticatedOperationsNewRoute
@@ -508,7 +487,6 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedParametresRoute: AuthenticatedParametresRoute,
   AuthenticatedProduitsRoute: AuthenticatedProduitsRoute,
   AuthenticatedProfilRoute: AuthenticatedProfilRoute,
-  AuthenticatedSynchronisationRoute: AuthenticatedSynchronisationRoute,
   AuthenticatedUtilisateursRoute: AuthenticatedUtilisateursRoute,
   AuthenticatedVoixRoute: AuthenticatedVoixRoute,
   AuthenticatedOperationsNewRoute: AuthenticatedOperationsNewRoute,
